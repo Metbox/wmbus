@@ -246,6 +246,34 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
     match: { measurementType: "Instantaneous", vifRange: "ParameterSet" },
   },
 
+  enhanced_id: {
+    kind: "string",
+    name: "enhanced_id",
+    description: "Enhanced identification.",
+    match: { measurementType: "Instantaneous", vifRange: "EnhancedIdentification" },
+  },
+
+  manufacturer: {
+    kind: "string",
+    name: "manufacturer",
+    description: "Manufacturer.",
+    match: { measurementType: "Instantaneous", vifRange: "Manufacturer" },
+  },
+
+  medium: {
+    kind: "string",
+    name: "medium",
+    description: "Medium.",
+    match: { measurementType: "Instantaneous", vifRange: "Medium" },
+  },
+
+  location: {
+    kind: "string",
+    name: "location",
+    description: "Location.",
+    match: { measurementType: "Instantaneous", vifRange: "Location" },
+  },
+
   software_version: {
     kind: "string",
     name: "software_version",
