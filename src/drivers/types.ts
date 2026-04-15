@@ -126,10 +126,15 @@ export interface NumericField {
   match: FieldMatcher;
   /**
    * Optional unit override — forces the output key's suffix regardless of
-   * the VIF's default unit. Rare; used for time-rescaling (RemainingBattery
-   * reports in days via a Unit::Day field).
+   * the VIF's default unit. Used for time-rescaling (RemainingBattery in
+   * years via a Unit::Year field).
    */
   forceUnit?: Unit;
+  /**
+   * Optional fixed multiplier applied AFTER the scaling step. Used by drivers
+   * like aquastream's battery field where days→years needs a 1/365 factor.
+   */
+  forceScale?: number;
   /** Field flags (STATUS / DEPRECATED / HIDDEN). */
   properties?: FieldProperty[];
 }

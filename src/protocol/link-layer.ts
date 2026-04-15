@@ -95,7 +95,12 @@ export function parseTelegramBytes(frame: Uint8Array): Telegram {
   const dllVersion = frame[8] as number;
   const dllType = frame[9] as number;
   const ci = frame[10] as number;
-  const payload = frame.slice(11, expected);
+  // Use the entire remaining frame as payload — upstream doesn't truncate at
+  // L+1 either, and several test fixtures rely on trailing bytes (qcaloric
+  // HCA's DateTime field, a few qheat variants). When the wire really has L+1
+  // bytes, slice() to the end is identical anyway.
+  const payload = frame.slice(11);
+  void expected;
 
   return {
     frame,

@@ -63,10 +63,6 @@ export function interpret(
   if (ctx.meterName !== undefined) out.name = ctx.meterName;
   out.id = ctx.id;
 
-  // Track which entries have been consumed so repeated matches can pick the
-  // next one — upstream's IndexNr (1-based) selects n-th occurrence.
-  const usageCount = new Map<DVEntry, number>();
-
   // Resolve library field references the driver opted into. Library fields
   // are prepended to the field list so explicit fields can override by name.
   const fields: FieldDefinition[] = [];
@@ -79,7 +75,7 @@ export function interpret(
   fields.push(...driver.fields);
 
   for (const field of fields) {
-    const matches = dvEntries.filter((e) => matchesField(e, field.match, usageCount));
+    const matches = dvEntries.filter((e) => matchesField(e, field.match));
     const indexNr = field.match.indexNr ?? 1;
     const picked = matches[indexNr - 1];
 
@@ -96,7 +92,6 @@ export function interpret(
       }
       continue;
     }
-    usageCount.set(picked, (usageCount.get(picked) ?? 0) + 1);
 
     if (field.kind === "numeric") {
       const result = extractNumeric(picked, field);
@@ -122,17 +117,10 @@ export function interpret(
 
 // ---------- Field matching ----------
 
-function matchesField(
-  entry: DVEntry,
-  matcher: FieldMatcher,
-  usageCount: Map<DVEntry, number>,
-): boolean {
+function matchesField(entry: DVEntry, matcher: FieldMatcher): boolean {
   // Exact DIF/VIF key takes priority — upstream's `match_dif_vif_key`.
   if (matcher.difVifKey !== undefined) {
     if (entry.difVifKey !== matcher.difVifKey.toUpperCase()) return false;
-    // Fields like "status" + "current_status" both target the same key; we
-    // allow reuse of the same DVEntry for exact-key matchers (upstream does
-    // the same — the entries map uses the key as-is).
     return true;
   }
 
@@ -176,12 +164,7 @@ function matchesField(
   if (!matchesRange(entry.tariff, matcher.tariffNr ?? 0)) return false;
   if (!matchesRange(entry.subunit, matcher.subUnitNr ?? 0)) return false;
 
-  // Already-used check for non-exact-key matchers — each entry can only be
-  // picked by one non-exact-key field to keep upstream's behaviour of
-  // returning progressively-later matches for repeated DVEntries.
-  // (Exact-key fields bypass this check; see the early return above.)
-  const used = usageCount.get(entry) ?? 0;
-  return used === 0;
+  return true;
 }
 
 function matchesRange(value: number, spec: number | { from: number; to: number } | "any"): boolean {
@@ -225,11 +208,16 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
   } else if (typeof field.scaling === "number") {
     scaled = raw * 10 ** field.scaling;
   }
+  // Optional non-power-of-10 multiplier (e.g. battery days → years).
+  if (field.forceScale !== undefined) {
+    scaled *= field.forceScale;
+  }
 
   // Upstream rounds to a "clean" number of decimals to avoid FP artefacts.
   // For auto-scaled values, the VIF-derived exponent tells us how many
-  // decimals are significant; match that.
-  const decimals = decimalsFor(unit, entry.vif, field);
+  // decimals are significant; match that. For forceScale fields keep extra
+  // precision (e.g. battery days→years to 6 decimals).
+  const decimals = field.forceScale !== undefined ? 6 : decimalsFor(unit, entry.vif, field);
   scaled = round(scaled, decimals);
 
   return { key, value: scaled };
@@ -371,5 +359,8 @@ export function isStringField(f: FieldDefinition): f is StringField {
 
 function hasStatusFallback(f: StringField): boolean {
   if (!f.properties) return false;
-  return f.properties.includes("STATUS") || f.properties.includes("INCLUDE_TPL_STATUS");
+  // Only INCLUDE_TPL_STATUS triggers default-emission (upstream falls back to
+  // the TPL status byte). STATUS alone means the field is *labelled* as
+  // status output but only shows up when a matching DVEntry exists.
+  return f.properties.includes("INCLUDE_TPL_STATUS");
 }
