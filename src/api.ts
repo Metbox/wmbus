@@ -90,10 +90,19 @@ export function decodeWmbusHexSync(
 
   const { entries: dvEntries } = parseDv(assembled.plaintext);
 
+  // Fall back to the driver's meterType-implied media if the wire's media
+  // string is "Unknown" — upstream's MeterType-default kicks in here for
+  // Diehl variants whose type byte (e.g. 0x8B) isn't in the standard table.
+  let media = assembled.effectiveMedia;
+  if (media === "Unknown" && driver !== "auto") {
+    const def = lookupDriverByName(driver);
+    if (def) media = mediaForMeterType(def.meterType) ?? media;
+  }
+
   const baseCtx = {
     meterName: options.name,
     id: options.idOverride ?? assembled.effectiveId,
-    media: assembled.effectiveMedia,
+    media,
     timestampOverride: options.timestampOverride,
   };
 
@@ -163,6 +172,32 @@ export async function analyzeWmbusHex(
  */
 export function registerCustomDriver(def: DriverDefinition): void {
   registerDriver(def);
+}
+
+/**
+ * Default JSON media string per MeterType. Used when the wire bytes don't
+ * yield a recognised media value but a driver is declared — upstream's
+ * driver layer overrides the wire media in this case.
+ */
+function mediaForMeterType(meterType: DriverDefinition["meterType"]): string | undefined {
+  switch (meterType) {
+    case "WaterMeter":
+      return "water";
+    case "HeatMeter":
+      return "heat";
+    case "ElectricityMeter":
+      return "electricity";
+    case "GasMeter":
+      return "gas";
+    case "HeatCostAllocationMeter":
+      return "heat cost allocation";
+    case "TempHygroMeter":
+      return "room sensor";
+    case "SmokeDetector":
+      return "smoke detector";
+    default:
+      return undefined;
+  }
 }
 
 export type { DriverDefinition };

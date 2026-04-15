@@ -191,6 +191,61 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
     },
   },
 
+  at_date: {
+    kind: "string",
+    name: "at_date",
+    description: "Date the snapshot value was recorded.",
+    match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 1 },
+  },
+
+  total_at_date_m3: {
+    kind: "numeric",
+    name: "total_at_date",
+    description: "Total volume at snapshot date.",
+    quantity: "Volume",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: { measurementType: "Instantaneous", vifRange: "Volume", storageNr: 1 },
+  },
+
+  customer: {
+    kind: "string",
+    name: "customer",
+    description: "Customer field.",
+    match: { measurementType: "Instantaneous", vifRange: "Customer" },
+  },
+
+  consumption_hca: {
+    kind: "numeric",
+    name: "consumption",
+    description: "Heat cost allocation reading.",
+    quantity: "HCA",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: { measurementType: "Instantaneous", vifRange: "HeatCostAllocation" },
+  },
+
+  target_hca: {
+    kind: "numeric",
+    name: "target",
+    description: "Heat cost allocation at last billing date.",
+    quantity: "HCA",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: {
+      measurementType: "Instantaneous",
+      vifRange: "HeatCostAllocation",
+      storageNr: 1,
+    },
+  },
+
+  parameter_set: {
+    kind: "string",
+    name: "parameter_set",
+    description: "Parameter set identifier.",
+    match: { measurementType: "Instantaneous", vifRange: "ParameterSet" },
+  },
+
   software_version: {
     kind: "string",
     name: "software_version",

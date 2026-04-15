@@ -19,7 +19,12 @@
 import { readReal32 } from "../data/decode-values.js";
 import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
-import { isInsideVifRange, vifEntryByName, vifScaleExponent } from "../data/vif-range.js";
+import {
+  isInsideVifRange,
+  vifEntryByName,
+  vifScaleExponent,
+  vifTimeUnitFactor,
+} from "../data/vif-range.js";
 import { libraryField } from "./common-fields.js";
 import { applyLookup } from "./translate.js";
 import type {
@@ -203,8 +208,20 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
   // Apply scaling.
   let scaled = raw;
   if (field.scaling === "Auto") {
-    const exp = vifScaleExponent(entry.vif);
-    if (exp !== 0) scaled = raw * 10 ** exp;
+    if (isTimeVif(entry.vif)) {
+      // Time VIFs encode the time unit (s/min/h/d) in the low bits — first
+      // convert raw to hours (canonical Time unit).
+      scaled = raw * vifTimeUnitFactor(entry.vif);
+      // If the field forces a different time unit (e.g. seconds), convert
+      // hours → that unit.
+      if (field.forceUnit) {
+        const f = hourConvertFactor(field.forceUnit);
+        if (f !== 1) scaled *= f;
+      }
+    } else {
+      const exp = vifScaleExponent(entry.vif);
+      if (exp !== 0) scaled = raw * 10 ** exp;
+    }
   } else if (typeof field.scaling === "number") {
     scaled = raw * 10 ** field.scaling;
   }
@@ -215,9 +232,11 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
 
   // Upstream rounds to a "clean" number of decimals to avoid FP artefacts.
   // For auto-scaled values, the VIF-derived exponent tells us how many
-  // decimals are significant; match that. For forceScale fields keep extra
-  // precision (e.g. battery days→years to 6 decimals).
-  const decimals = field.forceScale !== undefined ? 6 : decimalsFor(unit, entry.vif, field);
+  // decimals are significant; match that. For forceScale fields and time-
+  // unit conversions (raw seconds/minutes → hours) keep 6 decimals.
+  let decimals = decimalsFor(unit, entry.vif, field);
+  if (field.forceScale !== undefined) decimals = 6;
+  if (field.scaling === "Auto" && isTimeVif(entry.vif)) decimals = 6;
   scaled = round(scaled, decimals);
 
   return { key, value: scaled };
@@ -355,6 +374,42 @@ export function isNumericField(f: FieldDefinition): f is NumericField {
 }
 export function isStringField(f: FieldDefinition): f is StringField {
   return f.kind === "string";
+}
+
+/** Multiplier to convert hours to the given time unit. */
+function hourConvertFactor(unit: Unit): number {
+  switch (unit) {
+    case "Second":
+      return 3600;
+    case "Minute":
+      return 60;
+    case "Hour":
+      return 1;
+    case "Day":
+      return 1 / 24;
+    case "Week":
+      return 1 / (24 * 7);
+    case "Month":
+      return 1 / (24 * 30);
+    case "Year":
+      return 1 / (24 * 365);
+    default:
+      return 1;
+  }
+}
+
+function isTimeVif(vif: number): boolean {
+  const v = vif & 0xff;
+  // OnTime 0x20-0x23, OperatingTime 0x24-0x27, ActualityDuration 0x74-0x77.
+  if (v >= 0x20 && v <= 0x27) return true;
+  if (v >= 0x74 && v <= 0x77) return true;
+  // 0x7D extension: DurationSinceReadout 0x2C-0x2F, DurationOfTariff 0x31-0x33.
+  if ((vif & 0xff00) === 0x7d00) {
+    const low = vif & 0xff;
+    if (low >= 0x2c && low <= 0x2f) return true;
+    if (low >= 0x31 && low <= 0x33) return true;
+  }
+  return false;
 }
 
 function hasStatusFallback(f: StringField): boolean {
