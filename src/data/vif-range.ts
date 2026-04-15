@@ -178,11 +178,12 @@ export function isInsideVifRange(rawVif: number, vifRange: VIFRange): boolean {
  */
 export function vifScaleExponent(rawVif: number): number {
   const masked8 = rawVif & 0xff;
-  // Energy Wh: 0x00..0x07, base 10^-3 kWh
-  if (masked8 >= 0x00 && masked8 <= 0x07) return masked8 - 3;
-  // Energy MJ: 0x08..0x0F, base 10^-1 MJ ... 10^6 MJ — but canonical unit is MJ,
-  // so scale exponent for this block is (masked8 - 0x08) - 1.
-  if (masked8 >= 0x08 && masked8 <= 0x0f) return masked8 - 0x08 - 1;
+  // Energy Wh: 0x00..0x07. VIF 0x03 = 1 Wh, position p = 10^(p-3) Wh per raw
+  // unit. Canonical unit is kWh, so subtract another 3 → 10^(p-6) kWh.
+  if (masked8 >= 0x00 && masked8 <= 0x07) return masked8 - 6;
+  // Energy J: 0x08..0x0F. VIF 0x08 = 1 J, position p = 10^(p-0x08) J per raw
+  // unit. Canonical unit is MJ → 10^(p-0x08-6) MJ.
+  if (masked8 >= 0x08 && masked8 <= 0x0f) return masked8 - 0x08 - 6;
   // Volume: 0x10..0x17, base 10^-6 m³
   if (masked8 >= 0x10 && masked8 <= 0x17) return masked8 - 0x10 - 6;
   // OnTime/OperatingTime: 0x20..0x27 — time unit encoded in low 2 bits, not scale.
