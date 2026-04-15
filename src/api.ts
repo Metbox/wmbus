@@ -6,7 +6,16 @@
 // implementation is complete. Promises are preserved for source compatibility
 // even though the TS implementation is synchronous.
 
+import { parseDv } from "./data/dv-parser.js";
+import { runAutoDriver } from "./drivers/auto.js";
+import { interpret } from "./drivers/interpreter.js";
+import { listDriverNames, lookupDriverByName, registerDriver } from "./drivers/registry.js";
 import type { DriverDefinition } from "./drivers/types.js";
+import { decodeTelegram as runPipeline } from "./protocol/pipeline.js";
+import { hexToBytes } from "./util/hex.js";
+
+// Side-effect import: registers every bundled driver with the global registry.
+import "./drivers/builtin/index.js";
 
 export interface WMBusDecodeResult {
   [key: string]: unknown;
@@ -20,26 +29,101 @@ export interface WMBusDecodeResult {
   status?: string;
 }
 
+export interface DecodeOptions {
+  /** Configured meter name (upstream's `// Test: <name> ...` first token). */
+  name?: string;
+  /**
+   * Override the timestamp emitted in the JSON. Tests use
+   * `"1111-11-11T11:11:11Z"` to match upstream's WMBUSMETERS_INSTALL_MODE=testing.
+   * Defaults to the current wall-clock in ISO-8601 UTC with second precision.
+   */
+  timestampOverride?: string;
+}
+
 /**
  * Decode a wireless M-Bus hex telegram.
  *
- * @param hexString - Raw hex-encoded wM-Bus telegram (whitespace-tolerant).
- * @param driver - Driver name (e.g. "multical21"), or "auto" for MVT-based lookup.
- * @param key - Optional 32-hex-char AES-128 key for encrypted telegrams.
+ * @param hexString - Raw hex-encoded wM-Bus telegram (whitespace / separator tolerant).
+ * @param driver    - Driver name (e.g. "multical21") or "auto" for MVT dispatch.
+ * @param key       - Optional 32-hex-char AES-128 key for encrypted telegrams.
+ * @param options   - Optional name / timestamp override (mostly for tests).
  */
 export async function decodeWmbusHex(
-  _hexString: string,
-  _driver: string = "auto",
-  _key: string = "",
+  hexString: string,
+  driver: string = "auto",
+  key: string = "",
+  options: DecodeOptions = {},
 ): Promise<WMBusDecodeResult> {
-  throw new Error("decodeWmbusHex not yet implemented — see plan phases 1–6");
+  return decodeWmbusHexSync(hexString, driver, key, options);
+}
+
+/** Synchronous variant used by other modules; the async one is the public surface. */
+export function decodeWmbusHexSync(
+  hexString: string,
+  driver: string = "auto",
+  key: string = "",
+  options: DecodeOptions = {},
+): WMBusDecodeResult {
+  const aesKey = key.length > 0 ? hexToBytes(key) : null;
+  const assembled = runPipeline(hexString, aesKey);
+
+  // Failed decryption: emit the epoch-timestamp sentinel that Metbox's
+  // retry-with-key path relies on.
+  if (assembled.plaintext === null) {
+    const out: WMBusDecodeResult = {
+      _: "telegram",
+      media: assembled.effectiveMedia,
+      meter: driver === "auto" ? "auto" : driver,
+      id: assembled.effectiveId,
+      timestamp: "1970-01-01T00:00:00Z",
+    };
+    if (options.name !== undefined) out.name = options.name;
+    return out;
+  }
+
+  const { entries: dvEntries } = parseDv(assembled.plaintext);
+
+  const baseCtx = {
+    meterName: options.name,
+    id: assembled.effectiveId,
+    media: assembled.effectiveMedia,
+    timestampOverride: options.timestampOverride,
+  };
+
+  if (driver === "auto") {
+    return runAutoDriver(dvEntries, {
+      ...baseCtx,
+      mvt: {
+        manufacturer: assembled.effectiveMfct,
+        version: assembled.effectiveVersion,
+        type: assembled.effectiveType,
+      },
+    });
+  }
+
+  const def = lookupDriverByName(driver);
+  if (!def) {
+    // Unknown driver name — fall back to auto resolution.
+    return runAutoDriver(dvEntries, {
+      ...baseCtx,
+      mvt: {
+        manufacturer: assembled.effectiveMfct,
+        version: assembled.effectiveVersion,
+        type: assembled.effectiveType,
+      },
+    });
+  }
+
+  return interpret(def, dvEntries, baseCtx);
 }
 
 /**
  * Return every registered driver name (including "auto") sorted alphabetically.
  */
 export async function listWmbusDrivers(): Promise<string[]> {
-  throw new Error("listWmbusDrivers not yet implemented — see plan phase 5");
+  const names = listDriverNames();
+  if (!names.includes("auto")) names.unshift("auto");
+  return names.sort();
 }
 
 /**
@@ -47,17 +131,31 @@ export async function listWmbusDrivers(): Promise<string[]> {
  * trace. Used by the partner admin UI's debug endpoint.
  */
 export async function analyzeWmbusHex(
-  _hexString: string,
-  _driver: string = "auto",
-  _key: string = "",
+  hexString: string,
+  driver: string = "auto",
+  key: string = "",
+  options: DecodeOptions = {},
 ): Promise<{ json: WMBusDecodeResult | null; raw: string; stderr: string }> {
-  throw new Error("analyzeWmbusHex not yet implemented — see plan phase 7");
+  let json: WMBusDecodeResult | null = null;
+  let error = "";
+  try {
+    json = decodeWmbusHexSync(hexString, driver, key, options);
+  } catch (err) {
+    error = (err as Error).message;
+  }
+  // Plain-text output is intentionally lightweight — Metbox's admin UI treats
+  // it as opaque text. A byte-for-byte reproduction of upstream's
+  // `--analyze=plain` trace is out of scope for the TS port.
+  const raw = json ? JSON.stringify(json, null, 2) : "";
+  return { json, raw, stderr: error };
 }
 
 /**
  * Register a custom driver definition at runtime. Replaces the current
  * `custom-drivers/` → rebuild-WASM loop.
  */
-export function registerCustomDriver(_def: DriverDefinition): void {
-  throw new Error("registerCustomDriver not yet implemented — see plan phase 5");
+export function registerCustomDriver(def: DriverDefinition): void {
+  registerDriver(def);
 }
+
+export type { DriverDefinition };
