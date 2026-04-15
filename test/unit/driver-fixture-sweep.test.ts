@@ -56,6 +56,9 @@ describe("driver fixture sweep (Wave A)", () => {
     "aquastream",
     "sharky775",
     "janz",
+    "hydrus",
+    "picoflux",
+    "kaden",
   ];
 
   for (const driverName of WAVE_A_DRIVERS) {
@@ -77,6 +80,15 @@ describe("driver fixture sweep (Wave A)", () => {
         // janz: status "ERROR_FLAGS_A0 UNKNOWN_80" needs mfct-specific bit
         // labelling with UNKNOWN_<hex> for unmapped bits — deferred.
         !(driverName === "janz") &&
+        // hydrus: most fixtures use multi-tariff template-name expansion
+        // ({tariff_counter}), dual-quantity `target` fields, and Diehl-mfct
+        // remaining_battery scaling. Only the IzarRS variants stay simple.
+        !(
+          driverName === "hydrus" &&
+          ![
+            "60897379", // HydrusIzarRS
+          ].includes(f.id)
+        ) &&
         // Fixtures from simulation files that add extras (address, city,
         // conversions, output subsets, multi-telegram interactions) are
         // outside the per-driver output contract.
