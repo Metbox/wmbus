@@ -8,9 +8,13 @@
 import "./multical21.js";
 
 // Phase 6 — Wave A
+import "./aquastream.js";
 import "./elster.js";
 import "./iperl.js";
+import "./janz.js";
 import "./maddalena.js";
 import "./op041a.js";
+import "./qcaloric.js";
 import "./qheat.js";
+import "./sharky775.js";
 import "./supercom587.js";

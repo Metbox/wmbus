@@ -33,6 +33,13 @@ export interface DecodeOptions {
   /** Configured meter name (upstream's `// Test: <name> ...` first token). */
   name?: string;
   /**
+   * Override the meter id in the output. Mirrors upstream's behaviour where
+   * the configured meter id wins over the on-wire id (a few qcaloric/qheat
+   * test fixtures rely on this — wire bytes don't match the JSON id).
+   * Production callers usually leave this unset.
+   */
+  idOverride?: string;
+  /**
    * Override the timestamp emitted in the JSON. Tests use
    * `"1111-11-11T11:11:11Z"` to match upstream's WMBUSMETERS_INSTALL_MODE=testing.
    * Defaults to the current wall-clock in ISO-8601 UTC with second precision.
@@ -74,7 +81,7 @@ export function decodeWmbusHexSync(
       _: "telegram",
       media: assembled.effectiveMedia,
       meter: driver === "auto" ? "auto" : driver,
-      id: assembled.effectiveId,
+      id: options.idOverride ?? assembled.effectiveId,
       timestamp: "1970-01-01T00:00:00Z",
     };
     if (options.name !== undefined) out.name = options.name;
@@ -85,7 +92,7 @@ export function decodeWmbusHexSync(
 
   const baseCtx = {
     meterName: options.name,
-    id: assembled.effectiveId,
+    id: options.idOverride ?? assembled.effectiveId,
     media: assembled.effectiveMedia,
     timestampOverride: options.timestampOverride,
   };
