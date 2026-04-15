@@ -22,6 +22,7 @@ export type Signedness = "Signed" | "Unsigned";
 export type MeterType =
   | "WaterMeter"
   | "HeatMeter"
+  | "HeatCoolingMeter"
   | "ElectricityMeter"
   | "GasMeter"
   | "HeatCostAllocationMeter"
@@ -30,6 +31,7 @@ export type MeterType =
   | "DoorWindowSensor"
   | "PulseCounter"
   | "LeakageDetector"
+  | "PressureSensor"
   | "Unknown";
 
 export type FieldProperty = "STATUS" | "DEPRECATED" | "HIDDEN" | "INCLUDE_TPL_STATUS";

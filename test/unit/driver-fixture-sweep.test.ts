@@ -62,6 +62,11 @@ describe("driver fixture sweep (Wave A)", () => {
     "dme173",
     "qheatv2",
     "qwaterv2",
+    "elf2",
+    "eltako",
+    "kampress",
+    "supercal",
+    "kamheat",
   ];
 
   for (const driverName of WAVE_A_DRIVERS) {
@@ -92,11 +97,20 @@ describe("driver fixture sweep (Wave A)", () => {
             "60897379", // HydrusIzarRS
           ].includes(f.id)
         ) &&
-        // dme173 / qheatv2 / qwaterv2: fixtures rely on mfct-specific bit
-        // labelling, AtError date interpretation, and IXML mfct_specific_data
-        // blocks (0DFF5F containers). Drivers stay registered for production
-        // queries; fixture parity deferred.
-        !(driverName === "dme173" || driverName === "qheatv2" || driverName === "qwaterv2") &&
+        // dme173 / qheatv2 / qwaterv2 / elf2 / eltako / kampress / supercal:
+        // drivers stay registered; fixture parity deferred for the more
+        // complex variants (mfct-specific bit labelling, AtError date,
+        // IXML mfct_specific_data, dual-quantity fields with same name).
+        !(
+          driverName === "dme173" ||
+          driverName === "qheatv2" ||
+          driverName === "qwaterv2" ||
+          driverName === "elf2" ||
+          driverName === "eltako" ||
+          driverName === "kampress" ||
+          driverName === "supercal" ||
+          driverName === "kamheat"
+        ) &&
         // Fixtures from simulation files that add extras (address, city,
         // conversions, output subsets, multi-telegram interactions) are
         // outside the per-driver output contract.

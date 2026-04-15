@@ -185,6 +185,8 @@ function mediaForMeterType(meterType: DriverDefinition["meterType"]): string | u
       return "water";
     case "HeatMeter":
       return "heat";
+    case "HeatCoolingMeter":
+      return "heat/cooling load";
     case "ElectricityMeter":
       return "electricity";
     case "GasMeter":
@@ -195,6 +197,8 @@ function mediaForMeterType(meterType: DriverDefinition["meterType"]): string | u
       return "room sensor";
     case "SmokeDetector":
       return "smoke detector";
+    case "PressureSensor":
+      return "pressure";
     default:
       return undefined;
   }
