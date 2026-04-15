@@ -67,6 +67,15 @@ describe("driver fixture sweep (Wave A)", () => {
     "kampress",
     "supercal",
     "kamheat",
+    "ime",
+    "fiowater",
+    "istaheat",
+    "itronheat",
+    "sensostar",
+    "sharky",
+    "sharky774",
+    "izar",
+    "flowiq2200",
   ];
 
   for (const driverName of WAVE_A_DRIVERS) {
@@ -109,7 +118,16 @@ describe("driver fixture sweep (Wave A)", () => {
           driverName === "eltako" ||
           driverName === "kampress" ||
           driverName === "supercal" ||
-          driverName === "kamheat"
+          driverName === "kamheat" ||
+          driverName === "ime" ||
+          driverName === "fiowater" ||
+          driverName === "istaheat" ||
+          driverName === "itronheat" ||
+          driverName === "sensostar" ||
+          driverName === "sharky" ||
+          driverName === "sharky774" ||
+          driverName === "izar" ||
+          driverName === "flowiq2200"
         ) &&
         // Fixtures from simulation files that add extras (address, city,
         // conversions, output subsets, multi-telegram interactions) are
