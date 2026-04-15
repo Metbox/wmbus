@@ -20,6 +20,7 @@ import { readReal32 } from "../data/decode-values.js";
 import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
 import { isInsideVifRange, vifEntryByName, vifScaleExponent } from "../data/vif-range.js";
+import { libraryField } from "./common-fields.js";
 import { applyLookup } from "./translate.js";
 import type {
   DriverDefinition,
@@ -66,11 +67,35 @@ export function interpret(
   // next one — upstream's IndexNr (1-based) selects n-th occurrence.
   const usageCount = new Map<DVEntry, number>();
 
-  for (const field of driver.fields) {
+  // Resolve library field references the driver opted into. Library fields
+  // are prepended to the field list so explicit fields can override by name.
+  const fields: FieldDefinition[] = [];
+  const explicitNames = new Set<string>();
+  for (const f of driver.fields) explicitNames.add(f.name);
+  for (const libName of driver.libraryFields ?? []) {
+    const lib = libraryField(libName);
+    if (lib && !explicitNames.has(lib.name)) fields.push(lib);
+  }
+  fields.push(...driver.fields);
+
+  for (const field of fields) {
     const matches = dvEntries.filter((e) => matchesField(e, field.match, usageCount));
     const indexNr = field.match.indexNr ?? 1;
     const picked = matches[indexNr - 1];
-    if (!picked) continue;
+
+    if (!picked) {
+      // String-with-lookup fields tagged STATUS / INCLUDE_TPL_STATUS get the
+      // default rule message when no DVEntry matches — upstream falls back
+      // to the TPL status byte in this case; we simplify to "the default
+      // rule message" since most drivers' default is "OK" anyway.
+      if (field.kind === "string" && field.lookup && hasStatusFallback(field)) {
+        const defaults = field.lookup.rules
+          .map((r) => r.defaultMessage ?? "")
+          .filter((s) => s.length > 0);
+        out[field.name] = defaults.join(" ");
+      }
+      continue;
+    }
     usageCount.set(picked, (usageCount.get(picked) ?? 0) + 1);
 
     if (field.kind === "numeric") {
@@ -210,16 +235,19 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
   return { key, value: scaled };
 }
 
-function resolveUnit(entry: DVEntry, field: NumericField): Unit {
+function resolveUnit(_entry: DVEntry, field: NumericField): Unit {
   if (field.forceUnit) return field.forceUnit;
 
-  // Prefer the matching VIFRange table entry (drivers that match via VIF
-  // range get their canonical unit from there).
-  const range = vifRangeForEntry(entry);
-  if (range) return range;
+  // Always pick the field's quantity-canonical unit. The VIF-range default
+  // unit (e.g. MJ for the EnergyMJ block) is the *intermediate* unit that
+  // vifScaleExponent already converts to the canonical (kWh, m3, kw…).
+  // Upstream's behaviour: every Energy field outputs `_kwh`, every Volume
+  // field outputs `_m3`, regardless of which VIF range matched.
+  return canonicalUnitForQuantity(field.quantity);
+}
 
-  // Fall back by quantity — rough but covers most declaratively-matched fields.
-  switch (field.quantity) {
+function canonicalUnitForQuantity(quantity: NumericField["quantity"]): Unit {
+  switch (quantity) {
     case "Volume":
       return "M3";
     case "Energy":
@@ -253,38 +281,6 @@ function resolveUnit(entry: DVEntry, field: NumericField): Unit {
     default:
       return "Unknown";
   }
-}
-
-function vifRangeForEntry(entry: DVEntry): Unit | null {
-  // Walk the VIF table looking for an entry whose range covers the raw VIF.
-  // This mirrors the `toDefaultUnit(Vif v)` helper in dvparser.cc.
-  // We use the cached table from vif-range.ts via a tiny adapter: look up by
-  // symbolic name after resolving the range membership via isInsideVifRange.
-  for (const name of [
-    "Volume",
-    "VolumeFlow",
-    "FlowTemperature",
-    "ReturnTemperature",
-    "TemperatureDifference",
-    "ExternalTemperature",
-    "Pressure",
-    "EnergyWh",
-    "EnergyMJ",
-    "PowerW",
-    "PowerJh",
-    "OnTime",
-    "OperatingTime",
-    "ActualityDuration",
-    "HeatCostAllocation",
-    "Date",
-    "DateTime",
-  ] as const) {
-    if (isInsideVifRange(entry.vif, name)) {
-      const ent = vifEntryByName(name);
-      if (ent) return ent.unit;
-    }
-  }
-  return null;
 }
 
 // How many decimals to keep for a given unit. Values chosen to match the
@@ -371,4 +367,9 @@ export function isNumericField(f: FieldDefinition): f is NumericField {
 }
 export function isStringField(f: FieldDefinition): f is StringField {
   return f.kind === "string";
+}
+
+function hasStatusFallback(f: StringField): boolean {
+  if (!f.properties) return false;
+  return f.properties.includes("STATUS") || f.properties.includes("INCLUDE_TPL_STATUS");
 }

@@ -238,6 +238,7 @@ function decodeAsNumber(dif: number, vif: number, rawValue: Uint8Array): number 
 function decodeAsString(dif: number, vif: number, rawValue: Uint8Array): string | null {
   if (rawValue.length === 0) return null;
   const low = vif & 0x7f;
+  const fullVif = vif & 0x7f7f;
 
   // Date type G (0x6C) — 2 bytes.
   if (low === 0x6c && rawValue.length >= 2) {
@@ -249,15 +250,28 @@ function decodeAsString(dif: number, vif: number, rawValue: Uint8Array): string 
   }
   // Fabrication number (0x78) — BCD stored as ASCII.
   if (low === 0x78) {
-    // BCD rendered as digits (reversed because BCD is LE-nibble).
-    if (isBcdDataField(dif)) {
-      return bcdDigitString(rawValue);
-    }
+    if (isBcdDataField(dif)) return bcdDigitString(rawValue);
     return readReadableString(rawValue, true);
   }
   // Enhanced identification (0x79) — same treatment.
   if (low === 0x79) {
     return isBcdDataField(dif) ? bcdDigitString(rawValue) : readReadableString(rawValue, true);
+  }
+  // 0x7D-extension text VIFs: software/firmware/hardware/model version,
+  // location, customer, manufacturer, parameter set. All BCD-rendered.
+  if (
+    fullVif === 0x7d09 || // Medium
+    fullVif === 0x7d0a || // Manufacturer
+    fullVif === 0x7d0b || // ParameterSet
+    fullVif === 0x7d0c || // ModelVersion
+    fullVif === 0x7d0d || // HardwareVersion
+    fullVif === 0x7d0e || // FirmwareVersion
+    fullVif === 0x7d0f || // SoftwareVersion
+    fullVif === 0x7d10 || // Location
+    fullVif === 0x7d11 // Customer
+  ) {
+    if (isBcdDataField(dif)) return bcdDigitString(rawValue);
+    return readReadableString(rawValue, true);
   }
   return null;
 }
