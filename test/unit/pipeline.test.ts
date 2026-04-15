@@ -21,18 +21,16 @@ const FIXTURES = JSON.parse(readFileSync(FIXTURES_PATH, "utf8")) as Fixture[];
 
 describe("decodeTelegram — hand-verified cases", () => {
   it("decodes a Multical21 C1 NOKEY telegram", () => {
-    // One telegram below the Test header is pre-decrypted (short one starting `23...`);
-    // the first/long one has ELL-II encryption but is a fixture that upstream tests
-    // decryption against. For a NOKEY run, the pipeline must still produce a clean
-    // DLL parse and either plaintext or "missing-key" status.
+    // Multical21 C1 fixture. SN bits claim AES_CTR but Kamstrup meters
+    // deliver plaintext with a matching PL-CRC — so the pipeline treats
+    // the body as valid plaintext and reports "not-required".
     const d = decodeTelegram(
       "2A442D2C998734761B168D2091D37CAC21576C78_02FF207100041308190000441308190000615B7F616713",
     );
     expect(d.telegram.ci).toBe(0x8d); // ELL-II
     expect(d.effectiveId).toBe("76348799");
-    // ELL-II with no key: security mode is AES_CTR based on SN bits,
-    // we end up with missing-key.
-    expect(["missing-key", "ok", "wrong-key"]).toContain(d.decryption.status);
+    expect(d.decryption.status).toBe("not-required");
+    expect(d.plaintext).not.toBeNull();
   });
 
   it("decodes an iPerl T1 NOKEY (TPL short-header, plaintext payload)", () => {

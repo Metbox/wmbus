@@ -154,36 +154,33 @@ export function parseEll(
     // Anything beyond those is the true payload.
     let remaining: Uint8Array = payload.slice(offset);
 
-    if (securityMode === EllSecurityMode.AesCtr) {
-      if (aesKey) {
-        const iv = buildEllIv(dllMfctBytes, dllAddress, cc, snBytes);
-        remaining = aes128Ctr(aesKey, iv, remaining);
-      } else {
-        // Encryption declared but no key — signal failure so the pipeline
-        // can emit the epoch-timestamp sentinel. Skip the rest of the
-        // payload parse; it's encrypted garbage at this point.
-        missingKey = true;
-      }
+    if (securityMode === EllSecurityMode.AesCtr && aesKey) {
+      const iv = buildEllIv(dllMfctBytes, dllAddress, cc, snBytes);
+      remaining = aes128Ctr(aesKey, iv, remaining);
     }
+    // If AES_CTR but no key, we still try to read the body — some meters
+    // (notably Kamstrup Multical21) set the AES_CTR SN flag but deliver
+    // plaintext. The PL-CRC check below is authoritative: if it matches,
+    // the body is valid regardless of the flag.
 
-    // When missingKey fires we have encrypted bytes we can't meaningfully
-    // inspect — return them as-is for logging but don't touch PL-CRC.
-    if (missingKey) {
-      plaintext = remaining;
-    } else {
-      if (remaining.length < 2) {
-        throw new DecodeError("ell", `payload too short for ELL PL-CRC`);
-      }
-      const plCrcLe = ((remaining[1] as number) << 8) | (remaining[0] as number);
-      const body = remaining.slice(2);
-      const computed = crc16En13757(body);
-      payloadCrcOk = plCrcLe === computed;
-      plaintext = body;
+    if (remaining.length < 2) {
+      throw new DecodeError("ell", `payload too short for ELL PL-CRC`);
+    }
+    const plCrcLe = ((remaining[1] as number) << 8) | (remaining[0] as number);
+    const body = remaining.slice(2);
+    const computed = crc16En13757(body);
+    payloadCrcOk = plCrcLe === computed;
+    plaintext = body;
 
-      // Upstream marks the frame as decryption_failed when the PL-CRC doesn't
-      // match; callers use that to decide whether to emit the epoch sentinel.
-      if (securityMode === EllSecurityMode.AesCtr && !payloadCrcOk) {
+    // Upstream marks the frame as decryption_failed when the PL-CRC doesn't
+    // match and encryption was declared. If the CRC matches, the body is
+    // good regardless of the AES_CTR flag (some meters set the flag but
+    // send plaintext).
+    if (securityMode === EllSecurityMode.AesCtr && !payloadCrcOk) {
+      if (aesKey) {
         decryptionFailed = true;
+      } else {
+        missingKey = true;
       }
     }
   } else {
