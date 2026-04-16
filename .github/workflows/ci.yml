@@ -25,7 +25,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: npm ci
+      # `--ignore-scripts` skips the `prepare` hook (which builds). CI
+      # runs `npm run build` explicitly in a later step, so avoiding the
+      # redundant build on install speeds the job up.
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
