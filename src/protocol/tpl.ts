@@ -126,7 +126,12 @@ export function parseTpl(
     if (payload.length < 4) {
       throw new DecodeError("tpl", `short TPL header requires 4 bytes (got ${payload.length})`);
     }
-  } else if (ci === 0x78 || ci === 0x79 || ci === 0x51) {
+  } else if (
+    ci === 0x78 ||
+    ci === 0x79 ||
+    ci === 0x51 ||
+    (ci >= 0xa0 && ci <= 0xb7) // Mfct-specific (Techem Compact V, fhkvdataiii, …)
+  ) {
     // No header — payload is plaintext as-is.
     return {
       ...base,

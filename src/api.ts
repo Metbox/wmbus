@@ -105,6 +105,7 @@ export function decodeWmbusHexSync(
     media,
     tplStatus: assembled.tplStatus,
     timestampOverride: options.timestampOverride,
+    plaintext: assembled.plaintext,
   };
 
   if (driver === "auto") {

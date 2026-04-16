@@ -22,7 +22,22 @@ export function applyLookup(value: number, lookup: TranslateLookup): string {
   }
   // Upstream joins rule outputs with a space and drops empties.
   const nonEmpty = parts.filter((p) => p.length > 0);
-  return nonEmpty.join(" ");
+  const joined = nonEmpty.join(" ");
+  return sortStatusString(joined);
+}
+
+/**
+ * Tokenise on spaces, sort alphabetically, dedupe, then replace `~` with
+ * space. Mirrors `sortStatusString` in upstream util.cc:2158.
+ */
+export function sortStatusString(input: string): string {
+  if (input.length === 0) return input;
+  const tokens = new Set<string>();
+  for (const token of input.split(" ")) {
+    if (token.length > 0) tokens.add(token);
+  }
+  const sorted = Array.from(tokens).sort();
+  return sorted.join(" ").replace(/~/g, " ");
 }
 
 function applyRule(rawValue: number, rule: TranslateRule): string | null {

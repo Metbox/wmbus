@@ -64,5 +64,14 @@ export const supercal = defineDriver({
       description: "End of billing period.",
       match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 20 },
     },
+    {
+      kind: "numeric",
+      name: "power",
+      description: "Current power.",
+      quantity: "Power",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "AnyPowerVIF" },
+    },
   ],
 });

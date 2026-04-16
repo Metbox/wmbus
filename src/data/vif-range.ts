@@ -177,6 +177,15 @@ export function isInsideVifRange(rawVif: number, vifRange: VIFRange): boolean {
  * Specific ranges override this (date, text, dimensionless) and get scale=1.
  */
 export function vifScaleExponent(rawVif: number): number {
+  // 0x7B extension table — check FIRST so 0x7B08/0x7B09 don't fall into the
+  // base 0x08..0x0F (EnergyMJ) range. Matches upstream's separate pow cases.
+  if ((rawVif & 0xff00) === 0x7b00) {
+    const low = rawVif & 0xff;
+    if (low >= 0x00 && low <= 0x01) return (low & 1) + 2; // MWh → kWh
+    if (low >= 0x08 && low <= 0x09) return (low & 1) + 2; // GJ → MJ
+    if (low >= 0x1a && low <= 0x1b) return (low & 1) - 1; // Humidity
+    return 0;
+  }
   const masked8 = rawVif & 0xff;
   // Energy Wh: 0x00..0x07. VIF 0x03 = 1 Wh, position p = 10^(p-3) Wh per raw
   // unit. Canonical unit is kWh, so subtract another 3 → 10^(p-6) kWh.
@@ -208,14 +217,27 @@ export function vifScaleExponent(rawVif: number): number {
   if (masked8 >= 0x68 && masked8 <= 0x6b) return masked8 - 0x68 - 3;
   // ActualityDuration 0x74..0x77 — time unit in low 2 bits (same as OnTime).
   if (masked8 >= 0x74 && masked8 <= 0x77) return 0;
-  // 0x7B extension table (EnergyMWh, EnergyGJ, RelativeHumidity).
+  return 0;
+}
+
+/**
+ * Non-power-of-10 unit conversion between the VIF range's native unit and the
+ * quantity's canonical unit. Energy in MJ (VIF 0x08-0x0F, 0x7B08-0x7B09) and
+ * Power in MJ/h (VIF 0x30-0x37) share the 1/3.6 factor; everything else is
+ * the identity.
+ */
+export function vifUnitConversionFactor(rawVif: number): number {
+  const low8 = rawVif & 0xff;
+  // Energy in J/MJ → kWh: divide by 3.6
+  if (low8 >= 0x08 && low8 <= 0x0f) return 1 / 3.6;
+  // Power in J/h/MJ/h → kW: same conversion
+  if (low8 >= 0x30 && low8 <= 0x37) return 1 / 3.6;
+  // 0x7B08/0x7B09 EnergyGJ → kWh: same conversion
   if ((rawVif & 0xff00) === 0x7b00) {
     const low = rawVif & 0xff;
-    if (low >= 0x00 && low <= 0x01) return low + 2; // 10^2 kWh (= MWh), 10^3 kWh
-    if (low >= 0x08 && low <= 0x09) return low - 0x08; // GJ scale in MJ terms
-    if (low >= 0x1a && low <= 0x1b) return (low & 1) - 1; // Humidity
+    if (low >= 0x08 && low <= 0x09) return 1 / 3.6;
   }
-  return 0;
+  return 1;
 }
 
 /**
