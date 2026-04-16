@@ -4,18 +4,15 @@
   "description": "TypeScript implementation of the wireless M-Bus (wM-Bus) protocol and meter drivers. Derived from wmbusmeters (GPL-3.0).",
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "private": true,
   "engines": {
     "node": ">=20"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./drivers": {
       "types": "./dist/drivers/index.d.ts",
@@ -29,7 +26,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "sideEffects": [
     "./dist/drivers/builtin/*"
@@ -37,15 +35,22 @@
   "scripts": {
     "harvest": "tsx scripts/harvest-fixtures.ts",
     "typecheck": "tsc",
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "biome lint ./src ./test ./scripts",
     "format": "biome format --write ./src ./test ./scripts",
-    "check": "biome check --write ./src ./test ./scripts"
+    "check": "biome check --write ./src ./test ./scripts",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
   },
   "dependencies": {},
   "devDependencies": {
     "@biomejs/biome": "2.3.13",
+    "@changesets/cli": "^2.27.10",
     "@types/node": "^22.19.7",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3",
@@ -59,5 +64,18 @@
     "iot",
     "aes-128",
     "wmbusmeters"
-  ]
+  ],
+  "author": "Metbox",
+  "homepage": "https://github.com/metbox/wmbus#readme",
+  "bugs": {
+    "url": "https://github.com/metbox/wmbus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metbox/wmbus.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }
