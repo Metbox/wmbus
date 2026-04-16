@@ -27,7 +27,7 @@ import {
 } from "../data/vif-range.js";
 import { libraryField } from "./common-fields.js";
 import { decodeTplStatusWithMfct } from "./tpl-status.js";
-import { applyLookup } from "./translate.js";
+import { applyLookup, sortStatusString } from "./translate.js";
 import type {
   DriverDefinition,
   FieldDefinition,
@@ -528,7 +528,7 @@ function isTimeVif(vif: number): boolean {
 function combineStatusStrings(a: string, b: string): string {
   if (a === "OK" || a === "") return b === "" ? "OK" : b;
   if (b === "OK" || b === "") return a;
-  return `${a} ${b}`;
+  return sortStatusString(`${a} ${b}`);
 }
 
 function hasStatusFallback(f: StringField): boolean {
