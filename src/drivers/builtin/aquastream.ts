@@ -54,9 +54,10 @@ export const aquastream = defineDriver({
       name: "battery",
       description: "Estimated battery lifetime remaining.",
       quantity: "Time",
+      // Upstream XMQ specifies `force_scale = 0.0027397260273972603` literally
+      // (= 1/365, not 1/365.25). Use force_scale to match.
       scaling: "None",
       signedness: "Unsigned",
-      // 1 / 365 — converts days to years.
       forceScale: 1 / 365,
       forceUnit: "Year",
       match: {

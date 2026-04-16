@@ -1,11 +1,6 @@
 // Diehl/Hydrometer Hydrus water meter driver.
 //
 // Port of vendor/wmbusmeters@af48083/src/driver_hydrus.cc.
-//
-// Wave A coverage: declarative fields only. The multi-tariff `total_tariffN`
-// fields (which use upstream's `{tariff_counter}` template expansion) and
-// the `target` field that appears as both Volume and DateTime are deferred
-// to a later pass when template-name expansion is implemented.
 
 import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
@@ -27,18 +22,13 @@ export const hydrus = defineDriver({
     { manufacturer: DME, version: 0x16, type: 0x70 },
   ],
   defaultFields: "name,id,total_m3,total_at_date_m3,status,timestamp",
-  libraryFields: ["total_m3", "total_at_date_m3", "at_date"],
   fields: [
     {
       kind: "string",
       name: "status",
-      description: "Status of meter (TPL status fallback).",
+      description: "Status of meter.",
       properties: ["STATUS", "INCLUDE_TPL_STATUS"],
-      // No matcher field — upstream's `addStringField` (no extractor) means
-      // the field always emits the TPL status interpretation. With no
-      // matcher specified, no DVEntry will match so the default-emit path
-      // ("OK") fires.
-      match: { difVifKey: "FFFFFF" },
+      match: { difVifKey: "FFFFFFFF" },
       lookup: {
         rules: [
           {
@@ -50,6 +40,112 @@ export const hydrus = defineDriver({
           },
         ],
       },
+    },
+    {
+      kind: "numeric",
+      name: "total",
+      description: "Total water consumption.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume" },
+    },
+    {
+      kind: "numeric",
+      name: "total_tariff{tariff_counter}",
+      description: "Total water consumption recorded on tariff N.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        tariffNr: { from: 1, to: 2 },
+      },
+    },
+    {
+      kind: "numeric",
+      name: "total_tariff{tariff_counter}_at_date",
+      description: "Total water consumption recorded on tariff N at billing date.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        tariffNr: { from: 1, to: 2 },
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "flow",
+      description: "Current water flow.",
+      quantity: "Flow",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "VolumeFlow" },
+    },
+    {
+      kind: "numeric",
+      name: "total_at_date",
+      description: "Total water consumption recorded at date.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "string",
+      name: "at_date",
+      description: "Last billing period date.",
+      match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 1 },
+    },
+    {
+      kind: "numeric",
+      name: "flow_temperature",
+      description: "Water temperature.",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "FlowTemperature" },
+    },
+    {
+      kind: "numeric",
+      name: "target",
+      description: "Total water consumption recorded at end of last month.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        storageNr: 3,
+      },
+    },
+    {
+      kind: "string",
+      name: "target_datetime",
+      description: "End of last month.",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "DateTime",
+        storageNr: 3,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "remaining_battery_life",
+      description: "Remaining battery life in years.",
+      quantity: "Time",
+      scaling: "Auto",
+      signedness: "Unsigned",
+      forceUnit: "Year",
+      match: { measurementType: "Instantaneous", difVifKey: "02FD74" },
     },
   ],
 });

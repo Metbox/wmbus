@@ -199,6 +199,44 @@ export function readDateTimeTypeF(data: Uint8Array): string {
 }
 
 /**
+ * Datetime decode — wM-Bus type I (6-byte datetime with seconds precision).
+ *
+ * Same layout as Type F but with an extra second-byte at offset 0. Layout:
+ *
+ *   byte 0:  second (0-59) + bit 7 invalid flag
+ *   byte 1:  minute (0-59)
+ *   byte 2:  hour (0-23) + timezone bits
+ *   byte 3:  day (1-31) + year bits (high 3 shifted into bits 5-7)
+ *   byte 4:  month (1-12) + year bits (low 4 shifted into bits 4-7)
+ *   byte 5:  weekday (ignored)
+ *
+ * Returns `"YYYY-MM-DD HH:MM:SS"`.
+ */
+export function readDateTimeTypeI(data: Uint8Array): string {
+  if (data.length < 6) {
+    throw new Error(`readDateTimeTypeI: need 6 bytes, got ${data.length}`);
+  }
+  const second = (data[0] as number) & 0x3f;
+  const minute = (data[1] as number) & 0x3f;
+  const hour = (data[2] as number) & 0x1f;
+  const day = (data[3] as number) & 0x1f;
+  const month = (data[4] as number) & 0x0f;
+  const year =
+    ((((data[3] as number) & 0xe0) >>> 5) | (((data[4] as number) & 0xf0) >>> 1)) + 2000;
+
+  if ((data[0] as number) === 0xff && (data[1] as number) === 0xff) {
+    return "2127-15-31 31:63:63";
+  }
+
+  const dd = day.toString().padStart(2, "0");
+  const mm = month.toString().padStart(2, "0");
+  const hh = hour.toString().padStart(2, "0");
+  const mi = minute.toString().padStart(2, "0");
+  const ss = second.toString().padStart(2, "0");
+  return `${year}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+/**
  * Hex-string decode — the raw byte run rendered as uppercase hex. Used for
  * fabrication numbers and manufacturer-specific blobs.
  */

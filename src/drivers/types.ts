@@ -137,6 +137,11 @@ export interface NumericField {
    * like aquastream's battery field where days→years needs a 1/365 factor.
    */
   forceScale?: number;
+  /**
+   * Optional override for how many decimals to keep when rounding. Defaults
+   * vary by unit and VIF scale exponent.
+   */
+  decimals?: number;
   /** Field flags (STATUS / DEPRECATED / HIDDEN). */
   properties?: FieldProperty[];
 }

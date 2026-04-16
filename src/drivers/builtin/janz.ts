@@ -57,10 +57,13 @@ export const janz = defineDriver({
       name: "battery",
       description: "Estimated battery lifetime remaining.",
       quantity: "Time",
+      // Upstream XMQ specifies `force_scale = 0.0027397260273972603` (1/365).
+      // Fixture expects 2 decimals for janz specifically.
       scaling: "None",
       signedness: "Unsigned",
       forceScale: 1 / 365,
       forceUnit: "Year",
+      decimals: 2,
       match: { measurementType: "Instantaneous", difVifKey: "02FD74" },
     },
   ],

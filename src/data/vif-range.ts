@@ -221,8 +221,14 @@ export function vifScaleExponent(rawVif: number): number {
 /**
  * For time-based VIF ranges, the low 2 bits pick the time unit on the wire.
  * Returns the multiplier to convert to hours — e.g. seconds → 1/3600.
+ *
+ * Special cases:
+ *   - 0x7D74 RemainingBattery is always Day → factor 24
+ *   - 0x7D extension blocks that encode time in the low 2 bits use the same
+ *     encoding as OnTime/OperatingTime.
  */
 export function vifTimeUnitFactor(rawVif: number): number {
+  if (rawVif === 0x7d74) return 24; // RemainingBattery, unit=Day
   const masked = rawVif & 0x03;
   switch (masked) {
     case 0:

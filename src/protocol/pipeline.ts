@@ -36,6 +36,8 @@ export interface AssembledTelegram {
   ell: EllResult | null;
   /** TPL layer result, if present. */
   tpl: TplResult | null;
+  /** TPL status byte — 0 when no TPL header present. */
+  tplStatus: number;
   /** Final decryption outcome. */
   decryption: {
     status: DecryptionStatus;
@@ -244,6 +246,7 @@ function assemble(a: AssembleArgs): AssembledTelegram {
     telegram,
     ell,
     tpl,
+    tplStatus: tpl?.tplStatus ?? 0,
     decryption: {
       status: decryptionStatus,
       failed: decryptionStatus !== "ok" && decryptionStatus !== "not-required",

@@ -38,10 +38,18 @@ function applyRule(rawValue: number, rule: TranslateRule): string | null {
 
   if (rule.mapType === "BitToString") {
     const flags: string[] = [];
+    let remaining = masked;
     for (const entry of rule.map) {
       if ((masked & entry.value) === entry.value && entry.value !== 0) {
         flags.push(entry.text);
+        remaining &= ~entry.value;
       }
+    }
+    // Upstream: any bits set after map traversal get a `<rule_name>_<hex>`
+    // label so the caller sees the unmapped bits instead of silently dropping
+    // them. Matches handleBitToString in translatebits.cc:86.
+    if (remaining !== 0) {
+      flags.push(`${rule.name}_${remaining.toString(16).toUpperCase()}`);
     }
     if (flags.length === 0) {
       return rule.defaultMessage ?? "";
