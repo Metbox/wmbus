@@ -225,6 +225,20 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
     match: { measurementType: "Instantaneous", vifRange: "HeatCostAllocation" },
   },
 
+  /**
+   * Upstream's most common HCA naming — `current_consumption_hca` rather than
+   * plain `consumption_hca`. Most drivers reference this form.
+   */
+  current_consumption_hca: {
+    kind: "numeric",
+    name: "current_consumption",
+    description: "Current heat cost allocation reading.",
+    quantity: "HCA",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: { measurementType: "Instantaneous", vifRange: "HeatCostAllocation" },
+  },
+
   target_hca: {
     kind: "numeric",
     name: "target",
@@ -237,6 +251,47 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
       vifRange: "HeatCostAllocation",
       storageNr: 1,
     },
+  },
+
+  consumption_at_set_date_hca: {
+    kind: "numeric",
+    name: "consumption_at_set_date",
+    description: "HCA reading at the last billing set-date.",
+    quantity: "HCA",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: {
+      measurementType: "Instantaneous",
+      vifRange: "HeatCostAllocation",
+      storageNr: 1,
+    },
+  },
+
+  set_date: {
+    kind: "string",
+    name: "set_date",
+    description: "Billing period set-date.",
+    match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 1 },
+  },
+
+  total_energy_consumption_kwh: {
+    kind: "numeric",
+    name: "total_energy_consumption",
+    description: "Total energy consumption.",
+    quantity: "Energy",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF" },
+  },
+
+  total_volume_m3: {
+    kind: "numeric",
+    name: "total_volume",
+    description: "Total volume.",
+    quantity: "Volume",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: { measurementType: "Instantaneous", vifRange: "Volume" },
   },
 
   parameter_set: {
