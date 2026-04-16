@@ -68,6 +68,7 @@ import "./lansenpu.js";
 import "./lansenrp.js";
 import "./lansensm.js";
 import "./lansenth.js";
+import "./lse_07_17.js";
 import "./lse_08.js";
 import "./maddalena.js";
 import "./minomess.js";
