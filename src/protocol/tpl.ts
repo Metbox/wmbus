@@ -174,6 +174,11 @@ export function parseTpl(
       ? (tplCfg >> 4) & 0x0f
       : 0;
 
+  // Mode 7 adds a 1-byte CFG extension (KDF selector) after the main CFG.
+  if (securityMode === TplSecurityMode.AesCbcNoIv && payload.length > offset) {
+    offset += 1;
+  }
+
   const remaining = payload.slice(offset);
   const decryptResult = runSecurityMode({
     securityMode,

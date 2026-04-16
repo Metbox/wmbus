@@ -130,11 +130,11 @@ function decodeFromTelegram(telegram: Telegram, aesKey: Uint8Array | null): Asse
 
   // --- AFL layer (CI 0x90) — skip over the MAC/counter header ------------
   if (isAfl(currentCi)) {
-    // AFL is variable-length (per AFL.MCL bits). Phase 3 passes it through:
-    // we assume a plain 10-byte AFL header (MCL + MCR + payload-CI + SN + MAC)
-    // which matches the common case. Upstream's parseAFL handles more shapes
-    // — full port lands when Mode 7 support arrives.
-    if (afterEllPayload.length < 11) {
+    // First byte is AFL length (bytes after the length byte within AFL);
+    // upstream's parseAFL walks AFL.FC and AFL.MC for sub-fields. Total
+    // AFL header = 1 (CI = 0x90) + 1 (len) + <len> bytes. We skip past
+    // the whole thing to reach the next layer's CI.
+    if (afterEllPayload.length < 2) {
       return assemble({
         telegram,
         ell,
@@ -143,9 +143,18 @@ function decodeFromTelegram(telegram: Telegram, aesKey: Uint8Array | null): Asse
         decryptionStatus: "unsupported-mode",
       });
     }
-    // Treat the byte at offset 10 as the next-layer CI; shift past the
-    // 10-byte AFL header.
-    afterEllPayload = afterEllPayload.slice(10);
+    const aflHeaderBytes = afterEllPayload[0] as number; // len field value
+    const aflTotalSkip = 1 + aflHeaderBytes;
+    if (afterEllPayload.length < aflTotalSkip + 1) {
+      return assemble({
+        telegram,
+        ell,
+        tpl: null,
+        plaintext: null,
+        decryptionStatus: "unsupported-mode",
+      });
+    }
+    afterEllPayload = afterEllPayload.slice(aflTotalSkip);
     if (afterEllPayload.length === 0) {
       return assemble({
         telegram,
