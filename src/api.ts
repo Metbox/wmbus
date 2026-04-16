@@ -94,9 +94,23 @@ export function decodeWmbusHexSync(
   // string is "Unknown" — upstream's MeterType-default kicks in here for
   // Diehl variants whose type byte (e.g. 0x8B) isn't in the standard table.
   let media = assembled.effectiveMedia;
-  if (media === "Unknown" && driver !== "auto") {
+  if (driver !== "auto") {
     const def = lookupDriverByName(driver);
-    if (def) media = mediaForMeterType(def.meterType) ?? media;
+    if (def) {
+      if (media === "Unknown") {
+        media = mediaForMeterType(def.meterType) ?? media;
+      }
+      // Electricity drivers always override a "radio converter (…)" DLL
+      // type (the converter box masquerades as 0x37; upstream resolves the
+      // media from the inner TPL for electricity meters).
+      if (
+        def.meterType === "ElectricityMeter" &&
+        (media === "radio converter (meter side)" ||
+          media === "radio converter (system side)")
+      ) {
+        media = "electricity";
+      }
+    }
   }
 
   const baseCtx = {

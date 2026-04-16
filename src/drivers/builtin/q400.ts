@@ -1,23 +1,96 @@
-// q400 — auto-generated registry stub.
-// Source: upstream wmbusmeters driver definition.
+// Axioma Q400 water meter driver.
 //
-// Registers the driver with correct MVTs and library fields so the registry
-// resolves its name. Specialised field extraction + mfct-specific quirks are
-// not yet ported; production traffic will populate the standard library
-// fields and fall back to auto-driver behaviour for anything non-standard.
+// Port of vendor/wmbusmeters@af48083/src/driver_q400.cc.
 
 import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
+
+const AXI = flagToManufacturer("AXI");
+const FWD = 0x3b; // VIFCombinable::ForwardFlow
+const BWD = 0x3c; // VIFCombinable::BackwardFlow
 
 export const q400 = defineDriver({
   name: "q400",
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("AXI"), version: 0x07, type: 0x01 },
-    { manufacturer: flagToManufacturer("AXI"), version: 0x07, type: 0x10 },
+    { manufacturer: AXI, version: 0x07, type: 0x01 },
+    { manufacturer: AXI, version: 0x07, type: 0x10 },
   ],
-  defaultFields: "name,id,total_m3,status,timestamp",
-  libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
-  fields: [],
+  defaultFields: "name,id,total_m3,timestamp",
+  libraryFields: [
+    "meter_datetime",
+    "on_time_h",
+    "total_m3",
+    "total_forward_m3",
+    "total_backward_m3",
+    "flow_temperature_c",
+    "volume_flow_m3h",
+  ],
+  fields: [
+    {
+      kind: "string",
+      name: "status",
+      description: "Status and error flags.",
+      properties: ["STATUS", "INCLUDE_TPL_STATUS"],
+      match: { vifRange: "None" },
+    },
+    {
+      kind: "string",
+      name: "set_datetime",
+      description: "End of previous billing period (date + time).",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "DateTime",
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "consumption_at_set_date",
+      description: "Volume at the end of the previous billing period.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume", storageNr: 1 },
+    },
+    {
+      kind: "numeric",
+      name: "forward_at_set_date",
+      description: "Forward volume at the end of the previous billing period.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        storageNr: 1,
+        vifCombinables: [FWD],
+      },
+    },
+    {
+      kind: "numeric",
+      name: "backward_at_set_date",
+      description: "Backward volume at the end of the previous billing period.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        storageNr: 1,
+        vifCombinables: [BWD],
+      },
+    },
+    {
+      kind: "numeric",
+      name: "battery",
+      description: "Remaining battery percentage.",
+      quantity: "Counter",
+      scaling: "None",
+      signedness: "Signed",
+      forceUnit: "PERCENTAGE",
+      match: { difVifKey: "01FD74" },
+    },
+  ],
 });

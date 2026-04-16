@@ -69,6 +69,8 @@ export type Unit =
   | "HZ"
   // Kamstrup-specific composite unit (m³·°C — temperature-weighted volume)
   | "M3C"
+  // Percentage
+  | "PERCENTAGE"
   // Generic
   | "COUNTER"
   | "TXT"
@@ -130,6 +132,8 @@ export function quantityOfUnit(u: Unit): Quantity {
       return "RH";
     case "M3C":
       return "Energy";
+    case "PERCENTAGE":
+      return "Counter";
     case "DateLT":
     case "DateTimeLT":
       return "PointInTime";
@@ -219,6 +223,8 @@ export function unitSuffix(u: Unit): string {
       return "rh";
     case "M3C":
       return "m3c";
+    case "PERCENTAGE":
+      return "pct";
     case "DateLT":
       return "date";
     case "DateTimeLT":

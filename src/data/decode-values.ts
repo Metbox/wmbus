@@ -270,7 +270,7 @@ export function readReadableString(data: Uint8Array, reverse = true): string {
     let out = "";
     for (let i = data.length - 1; i >= 0; i--) {
       const b = data[i] as number;
-      out += b.toString(16).padStart(2, "0");
+      out += b.toString(16).padStart(2, "0").toUpperCase();
     }
     return out;
   }
