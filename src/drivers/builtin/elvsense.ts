@@ -55,7 +55,7 @@ export const elvsense = defineDriver({
       quantity: "Counter",
       scaling: "None",
       signedness: "Signed",
-      forceUnit: "COUNTER",
+      forceUnit: "PPM",
       match: { difVifKey: "027C03324F43" },
     },
     {

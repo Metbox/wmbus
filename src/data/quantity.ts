@@ -71,6 +71,8 @@ export type Unit =
   | "M3C"
   // Percentage
   | "PERCENTAGE"
+  // PPM (parts per million)
+  | "PPM"
   // Generic
   | "COUNTER"
   | "TXT"
@@ -133,6 +135,8 @@ export function quantityOfUnit(u: Unit): Quantity {
     case "M3C":
       return "Energy";
     case "PERCENTAGE":
+      return "Counter";
+    case "PPM":
       return "Counter";
     case "DateLT":
     case "DateTimeLT":
@@ -225,6 +229,8 @@ export function unitSuffix(u: Unit): string {
       return "m3c";
     case "PERCENTAGE":
       return "pct";
+    case "PPM":
+      return "ppm";
     case "DateLT":
       return "date";
     case "DateTimeLT":
