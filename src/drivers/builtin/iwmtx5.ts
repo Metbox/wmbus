@@ -1,23 +1,41 @@
-// iwmtx5 — auto-generated registry stub.
-// Source: upstream wmbusmeters driver definition.
+// BMeters iwmtx5 water meter driver.
 //
-// Registers the driver with correct MVTs and library fields so the registry
-// resolves its name. Specialised field extraction + mfct-specific quirks are
-// not yet ported; production traffic will populate the standard library
-// fields and fall back to auto-driver behaviour for anything non-standard.
+// Port of vendor/wmbusmeters@af48083/src/driver_iwmtx5.cc.
+// Mfct-specific TPL status bit 0x40 = TAMPER.
 
 import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
+
+const BMT = flagToManufacturer("BMT");
 
 export const iwmtx5 = defineDriver({
   name: "iwmtx5",
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("BMT"), version: 0x07, type: 0x18 },
-    { manufacturer: flagToManufacturer("BMT"), version: 0x06, type: 0x18 },
+    { manufacturer: BMT, version: 0x07, type: 0x18 },
+    { manufacturer: BMT, version: 0x06, type: 0x18 },
   ],
-  defaultFields: "name,id,total_m3,status,timestamp",
-  libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
-  fields: [],
+  defaultFields: "name,id,status,total_m3,timestamp",
+  libraryFields: ["meter_datetime", "total_m3"],
+  fields: [
+    {
+      kind: "string",
+      name: "status",
+      description: "Status and error flags.",
+      properties: ["STATUS", "INCLUDE_TPL_STATUS"],
+      match: { vifRange: "None" },
+      lookup: {
+        rules: [
+          {
+            name: "TPL_STS",
+            mapType: "BitToString",
+            maskBits: 0xe0,
+            defaultMessage: "OK",
+            map: [{ value: 0x40, text: "TAMPER" }],
+          },
+        ],
+      },
+    },
+  ],
 });
