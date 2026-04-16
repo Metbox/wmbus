@@ -1,6 +1,6 @@
 # @metbox/wmbus
 
-[![Release](https://img.shields.io/github/v/release/Metbox/wmbus?sort=semver)](https://github.com/Metbox/wmbus/releases)
+[![npm](https://img.shields.io/npm/v/@metbox/wmbus.svg)](https://www.npmjs.com/package/@metbox/wmbus)
 [![CI](https://github.com/Metbox/wmbus/actions/workflows/ci.yml/badge.svg)](https://github.com/Metbox/wmbus/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -18,29 +18,9 @@ full parity.
 
 ## Install
 
-Installed directly from GitHub, pinned to a release tag — no npm registry.
-
 ```bash
-# pin to a specific release (recommended)
-npm install github:Metbox/wmbus#v0.1.0
-
-# or, from the latest develop commit
-npm install github:Metbox/wmbus
+npm install @metbox/wmbus
 ```
-
-Or in `package.json`:
-
-```jsonc
-{
-  "dependencies": {
-    "@metbox/wmbus": "github:Metbox/wmbus#v0.1.0"
-  }
-}
-```
-
-`npm install` clones the repo, installs devDeps, runs the `prepare`
-script (which builds `dist/`), packs the build, and installs it into
-your `node_modules` — no registry, no auth required for public installs.
 
 ## Public API
 
