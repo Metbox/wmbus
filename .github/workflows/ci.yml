@@ -25,10 +25,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      # `--ignore-scripts` skips the `prepare` hook (which builds). CI
-      # runs `npm run build` explicitly in a later step, so avoiding the
-      # redundant build on install speeds the job up.
-      - run: npm ci --ignore-scripts
+      # `--ignore-scripts`: skip the `prepare` hook (build runs explicitly later).
+      # `--omit=optional`: skip platform-specific optional transitive deps
+      #   (@emnapi/*, etc.) whose Linux variants aren't in the lockfile because
+      #   it was generated on macOS. Our code doesn't use them.
+      - run: npm ci --ignore-scripts --omit=optional
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
