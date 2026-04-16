@@ -158,12 +158,23 @@ export function parseDv(data: Uint8Array, startOffset = 0): DvParseResult {
     const rawValue = data.slice(i, i + dataLen);
     i += dataLen;
 
-    // Build the canonical key from all chain bytes.
-    const keyBytes = new Uint8Array(1 + difChain.difes.length + 1 + vifChain.vifes.length);
+    // Build the canonical key from all chain bytes, including the
+    // variable-length VIF string (length byte + chars) so plain-text VIFs
+    // (0x7C / 0xFC) produce unique keys like "81027C03495523" rather than
+    // just "81027C".
+    const varLen = vifChain.varLengthVif;
+    const varBytes = varLen === null ? 0 : varLen.length + 1;
+    const keyBytes = new Uint8Array(
+      1 + difChain.difes.length + 1 + varBytes + vifChain.vifes.length,
+    );
     let p = 0;
     keyBytes[p++] = dif;
     for (const d of difChain.difes) keyBytes[p++] = d;
     keyBytes[p++] = data[difChain.endOffset] as number;
+    if (varLen !== null) {
+      keyBytes[p++] = varLen.length;
+      for (const b of varLen) keyBytes[p++] = b;
+    }
     for (const v of vifChain.vifes) keyBytes[p++] = v;
 
     const difVifKey = upperHex(keyBytes);

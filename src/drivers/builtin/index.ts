@@ -87,6 +87,7 @@ import "./qcaloric.js";
 import "./qheat.js";
 import "./qheat_55_us.js";
 import "./qheatv2.js";
+import "./qsmoke.js";
 import "./qualcosonic.js";
 import "./qwater.js";
 import "./qwaterv2.js";

@@ -16,7 +16,7 @@
 //     ... declared fields in order ...
 //     "timestamp": "1111-11-11T11:11:11Z"   // upstream's test-mode sentinel }
 
-import { readReal32 } from "../data/decode-values.js";
+import { readLeUint, readReal32 } from "../data/decode-values.js";
 import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
 import {
@@ -297,6 +297,20 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
     raw = readReal32(rawBytes);
   } else if (entry.asNumber !== null && !Number.isNaN(entry.asNumber)) {
     raw = entry.asNumber;
+    // Upstream's `force_unsigned` branch: when the driver says Unsigned,
+    // reinterpret integer DIFs as unsigned even if the DIF length would
+    // normally imply a signed value. BCD is always signed (ignore).
+    if (
+      field.signedness === "Unsigned" &&
+      raw < 0 &&
+      (entry.kind === "Int8" ||
+        entry.kind === "Int16" ||
+        entry.kind === "Int24" ||
+        entry.kind === "Int32" ||
+        entry.kind === "Int48")
+    ) {
+      raw = readLeUint(rawBytes, rawBytes.length);
+    }
   } else {
     return null;
   }
