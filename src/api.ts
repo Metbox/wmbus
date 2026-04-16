@@ -103,6 +103,7 @@ export function decodeWmbusHexSync(
     meterName: options.name,
     id: options.idOverride ?? assembled.effectiveId,
     media,
+    tplStatus: assembled.tplStatus,
     timestampOverride: options.timestampOverride,
   };
 

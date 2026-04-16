@@ -21,6 +21,7 @@ import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
 import { isInsideVifRange, vifScaleExponent, vifTimeUnitFactor } from "../data/vif-range.js";
 import { libraryField } from "./common-fields.js";
+import { decodeTplStatusWithMfct } from "./tpl-status.js";
 import { applyLookup } from "./translate.js";
 import type {
   DriverDefinition,
@@ -37,6 +38,8 @@ export interface InterpretContext {
   id: string;
   /** Effective JSON media string. */
   media: string;
+  /** TPL STS byte — used to label INCLUDE_TPL_STATUS fields when the DVEntry is absent. */
+  tplStatus?: number;
   /**
    * Override the `timestamp` field — test harnesses use
    * `"1111-11-11T11:11:11Z"` to match upstream's WMBUSMETERS_INSTALL_MODE=testing
@@ -76,34 +79,49 @@ export function interpret(
 
   for (const field of fields) {
     const matches = dvEntries.filter((e) => matchesField(e, field.match));
-    const indexNr = field.match.indexNr ?? 1;
-    const picked = matches[indexNr - 1];
 
-    if (!picked) {
-      // String-with-lookup fields tagged STATUS / INCLUDE_TPL_STATUS get the
-      // default rule message when no DVEntry matches — upstream falls back
-      // to the TPL status byte in this case; we simplify to "the default
-      // rule message" since most drivers' default is "OK" anyway.
-      if (field.kind === "string" && field.lookup && hasStatusFallback(field)) {
-        const defaults = field.lookup.rules
-          .map((r) => r.defaultMessage ?? "")
-          .filter((s) => s.length > 0);
-        out[field.name] = defaults.join(" ");
+    // Template-field expansion: when the field name contains a counter
+    // placeholder ({tariff_counter}/{storage_counter}/{subunit_counter}) and
+    // the matcher's corresponding nr is a range, emit one output per match.
+    const templateKind = detectTemplateKind(field.name);
+    if (templateKind && matches.length > 0 && isRangeMatcher(field.match, templateKind)) {
+      for (const entry of matches) {
+        const counter = counterFor(entry, templateKind);
+        const expandedName = field.name.replace(
+          new RegExp(`\\{${templateKind}_counter\\}`, "g"),
+          String(counter),
+        );
+        emit(out, { ...field, name: expandedName }, entry);
       }
       continue;
     }
 
-    if (field.kind === "numeric") {
-      const result = extractNumeric(picked, field);
-      if (result !== null) {
-        out[result.key] = result.value;
+    const indexNr = field.match.indexNr ?? 1;
+    const picked = matches[indexNr - 1];
+
+    if (!picked) {
+      // String-with-lookup fields tagged INCLUDE_TPL_STATUS fall back to
+      // decoding the TPL status byte (bits 0-4 standard + bits 5-7 mfct).
+      if (field.kind === "string" && field.lookup && hasStatusFallback(field)) {
+        out[field.name] = decodeTplStatusWithMfct(ctx.tplStatus ?? 0, field.lookup);
       }
-    } else {
-      const result = extractString(picked, field);
-      if (result !== null) {
-        out[result.key] = result.value;
-      }
+      continue;
     }
+
+    // String status fields with INCLUDE_TPL_STATUS + a DVEntry match: combine
+    // the driver's lookup output with the TPL status byte.
+    if (
+      field.kind === "string" &&
+      field.lookup &&
+      field.properties?.includes("INCLUDE_TPL_STATUS")
+    ) {
+      const driverStatus = applyLookup(picked.asNumber ?? 0, field.lookup);
+      const tplStr = decodeTplStatusWithMfct(ctx.tplStatus ?? 0, null);
+      out[field.name] = combineStatusStrings(driverStatus, tplStr);
+      continue;
+    }
+
+    emit(out, field, picked);
   }
 
   out.timestamp = ctx.timestampOverride ?? isoTimestampNow();
@@ -113,6 +131,55 @@ export function interpret(
   }
 
   return out;
+}
+
+// ---------- Template expansion ----------
+
+type CounterKind = "tariff" | "storage" | "subunit";
+
+function detectTemplateKind(name: string): CounterKind | null {
+  if (name.includes("{tariff_counter}")) return "tariff";
+  if (name.includes("{storage_counter}")) return "storage";
+  if (name.includes("{subunit_counter}")) return "subunit";
+  return null;
+}
+
+function isRangeMatcher(matcher: FieldMatcher, kind: CounterKind): boolean {
+  const v =
+    kind === "tariff"
+      ? matcher.tariffNr
+      : kind === "storage"
+        ? matcher.storageNr
+        : matcher.subUnitNr;
+  if (v === "any") return true;
+  return typeof v === "object" && v !== null && "from" in v;
+}
+
+function counterFor(entry: DVEntry, kind: CounterKind): number {
+  switch (kind) {
+    case "tariff":
+      return entry.tariff;
+    case "storage":
+      return entry.storageNr;
+    case "subunit":
+      return entry.subunit;
+  }
+}
+
+// ---------- Emission ----------
+
+function emit(
+  out: Record<string, unknown>,
+  field: FieldDefinition,
+  picked: DVEntry,
+): void {
+  if (field.kind === "numeric") {
+    const r = extractNumeric(picked, field);
+    if (r !== null) out[r.key] = r.value;
+  } else {
+    const r = extractString(picked, field);
+    if (r !== null) out[r.key] = r.value;
+  }
 }
 
 // ---------- Field matching ----------
@@ -232,6 +299,7 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
   let decimals = decimalsFor(unit, entry.vif, field);
   if (field.forceScale !== undefined) decimals = 6;
   if (field.scaling === "Auto" && isTimeVif(entry.vif)) decimals = 6;
+  if (field.decimals !== undefined) decimals = field.decimals;
   scaled = round(scaled, decimals);
 
   return { key, value: scaled };
@@ -387,7 +455,8 @@ function hourConvertFactor(unit: Unit): number {
     case "Month":
       return 1 / (24 * 30);
     case "Year":
-      return 1 / (24 * 365);
+      // Use Gregorian year (365.25 days) to match upstream's conversion.
+      return 1 / (24 * 365.25);
     default:
       return 1;
   }
@@ -398,13 +467,21 @@ function isTimeVif(vif: number): boolean {
   // OnTime 0x20-0x23, OperatingTime 0x24-0x27, ActualityDuration 0x74-0x77.
   if (v >= 0x20 && v <= 0x27) return true;
   if (v >= 0x74 && v <= 0x77) return true;
-  // 0x7D extension: DurationSinceReadout 0x2C-0x2F, DurationOfTariff 0x31-0x33.
+  // 0x7D extension.
   if ((vif & 0xff00) === 0x7d00) {
     const low = vif & 0xff;
-    if (low >= 0x2c && low <= 0x2f) return true;
-    if (low >= 0x31 && low <= 0x33) return true;
+    if (low >= 0x2c && low <= 0x2f) return true; // DurationSinceReadout
+    if (low >= 0x31 && low <= 0x33) return true; // DurationOfTariff
+    if (low === 0x74) return true; // RemainingBattery (always Day)
   }
   return false;
+}
+
+/** Combine the driver's status output with the TPL standard-bit output. */
+function combineStatusStrings(a: string, b: string): string {
+  if (a === "OK" || a === "") return b === "" ? "OK" : b;
+  if (b === "OK" || b === "") return a;
+  return `${a} ${b}`;
 }
 
 function hasStatusFallback(f: StringField): boolean {

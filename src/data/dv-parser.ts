@@ -19,6 +19,7 @@ import type { MeasurementType } from "../drivers/types.js";
 import {
   readBcd,
   readDateTimeTypeF,
+  readDateTimeTypeI,
   readDateTypeG,
   readHexString,
   readLeInt,
@@ -244,9 +245,10 @@ function decodeAsString(dif: number, vif: number, rawValue: Uint8Array): string 
   if (low === 0x6c && rawValue.length >= 2) {
     return readDateTypeG(rawValue);
   }
-  // DateTime type F (0x6D) — 4 bytes.
-  if (low === 0x6d && rawValue.length >= 4) {
-    return readDateTimeTypeF(rawValue);
+  // DateTime type F (0x6D) — 4 bytes; Type I — 6 bytes with seconds.
+  if (low === 0x6d) {
+    if (rawValue.length >= 6) return readDateTimeTypeI(rawValue);
+    if (rawValue.length >= 4) return readDateTimeTypeF(rawValue);
   }
   // Fabrication number (0x78) — BCD stored as ASCII.
   if (low === 0x78) {
