@@ -69,8 +69,8 @@ export interface FieldMatcher {
   storageNr?: number | { from: number; to: number } | "any";
   /** Tariff — default 0; omit or `"any"` to accept any. */
   tariffNr?: number | { from: number; to: number } | "any";
-  /** Subunit — default 0. */
-  subUnitNr?: number;
+  /** Subunit — default 0; range / "any" supported same as storage. */
+  subUnitNr?: number | { from: number; to: number } | "any";
   /**
    * VIFCombinable raw integer IDs required on the entry. Use a single
    * sentinel value `-1` to match "any combinable" (upstream's

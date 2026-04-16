@@ -1,20 +1,26 @@
 # @metbox/wmbus
 
+[![npm](https://img.shields.io/npm/v/@metbox/wmbus.svg)](https://www.npmjs.com/package/@metbox/wmbus)
+[![CI](https://github.com/metbox/wmbus/actions/workflows/ci.yml/badge.svg)](https://github.com/metbox/wmbus/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 TypeScript implementation of the wireless M-Bus (wM-Bus) protocol and meter
 drivers. Decodes wM-Bus hex telegrams — from Kamstrup, Diehl, Techem, Apator,
 Itron, Qundis, and ~80 other manufacturers — into typed JSON.
 
-**Status: pre-alpha.** See `/Users/martins_metbox/.claude/plans/jazzy-hopping-spindle.md`
-for the phased implementation plan. Phases 1–7 are landing incrementally before
-the public API becomes usable.
+A pure-TypeScript replacement for the Emscripten-compiled WASM build of
+[wmbusmeters](https://github.com/wmbusmeters/wmbusmeters): zero native deps,
+zero runtime npm deps, ESM-only, Node 20+.
 
-## Goals
+**Driver coverage:** 71 / 116 seed drivers at 100% upstream fixture parity
+(239 / 422 fixtures byte-for-byte). See [TODO.md](./TODO.md) for the path to
+full parity.
 
-- Replace the existing Emscripten-built wmbusmeters WASM with pure TypeScript.
-- Zero native/WASM dependencies, zero runtime npm dependencies.
-- Declarative driver definitions — add new meters without C++ rebuilds.
-- Full parity with the 91 meter drivers currently referenced by Metbox's
-  device-model seed data.
+## Install
+
+```bash
+npm install @metbox/wmbus
+```
 
 ## Public API
 
@@ -27,7 +33,17 @@ const decoded = await decodeWmbusHex(
   "5241A18CE86B309A0033FB233F80F64B",
 );
 // => { _: "telegram", media: "heat", meter: "sharky", id: "...", total_energy_consumption_kwh: ..., ... }
+
+const drivers = await listWmbusDrivers();
+// => ["abbb23", "aerius", "amiplus", ..., "auto"]
+
+const { json, raw, stderr } = await analyzeWmbusHex(hex, "auto", key);
+// json: parsed object, raw: pretty-printed JSON, stderr: error message if any
 ```
+
+The three functions are signature-compatible with the WASM wrapper they
+replace. `decodeWmbusHex` is `async` for source compatibility even though the
+implementation is synchronous.
 
 ## Custom drivers
 
