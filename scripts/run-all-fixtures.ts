@@ -49,7 +49,10 @@ function deepEqual(a: unknown, b: unknown): boolean {
 const byDriver = new Map<string, { pass: number; fail: number; firstFail?: string }>();
 
 for (const fx of FIXTURES) {
-  if (isShort(fx.hex) || isFormatB(fx.hex)) continue;
+  // Short frames (kamstrup compact) still need format-signature caching.
+  if (isShort(fx.hex)) continue;
+  // Format B is now supported but the sweep filter is kept for safety.
+  void isFormatB;
   const key = fx.key === "NOKEY" ? "" : fx.key;
   let actual: Record<string, unknown>;
   try {

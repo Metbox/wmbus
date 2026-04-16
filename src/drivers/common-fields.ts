@@ -141,6 +141,13 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
     match: { measurementType: "Instantaneous", vifRange: "DateTime" },
   },
 
+  meter_datetime_at_error: {
+    kind: "string",
+    name: "meter_datetime_at_error",
+    description: "The meter's own clock at the time it entered an error state.",
+    match: { measurementType: "AtError", vifRange: "DateTime" },
+  },
+
   meter_date: {
     kind: "string",
     name: "meter_date",

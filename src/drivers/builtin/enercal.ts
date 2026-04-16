@@ -1,27 +1,203 @@
-// enercal — auto-generated registry stub.
-// Source: upstream wmbusmeters driver definition.
+// GWF Enercal heat meter driver (wired M-Bus).
 //
-// Registers the driver with correct MVTs and library fields so the registry
-// resolves its name. Specialised field extraction + mfct-specific quirks are
-// not yet ported; production traffic will populate the standard library
-// fields and fall back to auto-driver behaviour for anything non-standard.
+// Port of vendor/wmbusmeters@af48083/src/driver_enercal.cc. A single driver
+// covers both the heat-meter (Energy / Volume / Temperature) and the
+// HCA-subunit shapes — upstream declares two fields named `subunit1` /
+// `subunit1_target` with different quantities (Volume + HCA). We keep both
+// definitions so whichever quantity matches the wire data wins.
 
 import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
 
+const GWF = flagToManufacturer("GWF");
+
 export const enercal = defineDriver({
   name: "enercal",
   meterType: "HeatMeter",
-  linkModes: ["C1", "T1"],
-  mvt: [{ manufacturer: flagToManufacturer("GWF"), version: 0x04, type: 0x08 }],
-  defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
-  libraryFields: [
-    "total_energy_consumption_kwh",
-    "total_volume_m3",
-    "meter_datetime",
-    "flow_temperature_c",
-    "return_temperature_c",
-    "volume_flow_m3h",
+  linkModes: ["MBUS"],
+  mvt: [{ manufacturer: GWF, version: 0x04, type: 0x08 }],
+  defaultFields: "name,id,status,total_kwh,target_kwh,total_m3,target_m3,timestamp",
+  fields: [
+    {
+      kind: "string",
+      name: "status",
+      description: "Meter status; includes TPL status byte.",
+      properties: ["STATUS", "INCLUDE_TPL_STATUS"],
+      match: { vifRange: "None" },
+    },
+    {
+      kind: "numeric",
+      name: "total",
+      description: "Total energy consumption.",
+      quantity: "Energy",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF" },
+    },
+    {
+      kind: "numeric",
+      name: "target",
+      description: "Energy at the set date.",
+      quantity: "Energy",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF", storageNr: 1 },
+    },
+    {
+      kind: "numeric",
+      name: "power",
+      description: "Current power.",
+      quantity: "Power",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "AnyPowerVIF" },
+    },
+    {
+      kind: "numeric",
+      name: "flow",
+      description: "Current volume flow.",
+      quantity: "Flow",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "VolumeFlow" },
+    },
+    {
+      kind: "numeric",
+      name: "flow_max",
+      description: "Maximum volume flow.",
+      quantity: "Flow",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Maximum", vifRange: "VolumeFlow" },
+    },
+    {
+      kind: "numeric",
+      name: "forward",
+      description: "Forward temperature.",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "FlowTemperature" },
+    },
+    {
+      kind: "numeric",
+      name: "return",
+      description: "Return temperature.",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "ReturnTemperature" },
+    },
+    {
+      kind: "numeric",
+      name: "difference",
+      description: "Temperature difference.",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "TemperatureDifference" },
+    },
+    {
+      kind: "numeric",
+      name: "total",
+      description: "Total water volume.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume" },
+    },
+    {
+      kind: "numeric",
+      name: "target",
+      description: "Water volume at the set date.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume", storageNr: 1 },
+    },
+    {
+      kind: "numeric",
+      name: "subunit1",
+      description: "Water volume for subunit 1.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume", subUnitNr: 1 },
+    },
+    {
+      kind: "numeric",
+      name: "subunit1_target",
+      description: "Water volume for subunit 1 at the target date.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "Volume",
+        subUnitNr: 1,
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "subunit1",
+      description: "HCA for subunit 1.",
+      quantity: "HCA",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "HeatCostAllocation",
+        subUnitNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "subunit1_target",
+      description: "HCA for subunit 1 at the target date.",
+      quantity: "HCA",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "HeatCostAllocation",
+        subUnitNr: 1,
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "subunit2",
+      description: "HCA for subunit 2.",
+      quantity: "HCA",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "HeatCostAllocation",
+        subUnitNr: 2,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "subunit2_target",
+      description: "HCA for subunit 2 at the target date.",
+      quantity: "HCA",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Instantaneous",
+        vifRange: "HeatCostAllocation",
+        subUnitNr: 2,
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "string",
+      name: "target_date",
+      description: "The most recent billing period date.",
+      match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 1 },
+    },
   ],
-  fields: [],
+  libraryFields: ["operating_time_h", "on_time_h", "meter_datetime"],
 });

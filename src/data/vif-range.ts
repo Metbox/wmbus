@@ -186,6 +186,13 @@ export function vifScaleExponent(rawVif: number): number {
     if (low >= 0x1a && low <= 0x1b) return (low & 1) - 1; // Humidity
     return 0;
   }
+  // 0x7D extension table — Voltage / Amperage scaling.
+  if ((rawVif & 0xff00) === 0x7d00) {
+    const low = rawVif & 0xff;
+    if (low >= 0x40 && low <= 0x4f) return (low & 0x0f) - 9; // Voltage
+    if (low >= 0x50 && low <= 0x5f) return (low & 0x0f) - 12; // Amperage
+    return 0;
+  }
   const masked8 = rawVif & 0xff;
   // Energy Wh: 0x00..0x07. VIF 0x03 = 1 Wh, position p = 10^(p-3) Wh per raw
   // unit. Canonical unit is kWh, so subtract another 3 → 10^(p-6) kWh.
