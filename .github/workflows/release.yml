@@ -8,7 +8,12 @@ on:
     types: [published]
 
 permissions:
+  # `contents: read` = checkout. `id-token: write` = OIDC attestation
+  # for npm Trusted Publishers — no NPM_TOKEN needed, auth happens via
+  # the GitHub Actions OIDC provider which npm cross-verifies against
+  # the trusted-publisher config set on the package on npmjs.com.
   contents: read
+  id-token: write
 
 jobs:
   publish:
@@ -42,6 +47,8 @@ jobs:
             exit 1
           fi
 
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # No NODE_AUTH_TOKEN — `npm publish` uses the OIDC token from
+      # GitHub Actions to authenticate with npm. Requires a trusted-
+      # publisher config on @metbox/wmbus matching repo=Metbox/wmbus
+      # and workflow=release.yml.
+      - run: npm publish --provenance
