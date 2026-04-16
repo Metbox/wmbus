@@ -28,6 +28,7 @@ import "./elf.js";
 import "./elf2.js";
 import "./elster.js";
 import "./eltako.js";
+import "./elvsense.js";
 import "./em24.js";
 import "./emerlin868.js";
 import "./enercal.js";
