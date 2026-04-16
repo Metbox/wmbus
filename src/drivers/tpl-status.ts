@@ -12,7 +12,7 @@
 //   bits 5-7: manufacturer-specific — decoded via driver's Translate.Lookup
 //             if provided, else emitted as "UNKNOWN_<hex>".
 
-import { applyLookup } from "./translate.js";
+import { applyLookup, sortStatusString } from "./translate.js";
 import type { TranslateLookup } from "./types.js";
 
 /** Decode only the standard bits 0-4. Returns "OK" when all clear. */
@@ -65,9 +65,9 @@ export function decodeTplStatusWithMfct(sts: number, lookup: TranslateLookup | n
     }
   }
 
-  if (t === "OK" || t === "") return s;
-  if (s === "OK" || s === "") return t;
-  return `${s} ${t}`;
+  if (t === "OK" || t === "") return sortStatusString(s);
+  if (s === "OK" || s === "") return sortStatusString(t);
+  return sortStatusString(`${s} ${t}`);
 }
 
 /** True if at least one rule in the lookup declares any map entries. */

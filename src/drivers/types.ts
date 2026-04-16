@@ -32,6 +32,7 @@ export type MeterType =
   | "PulseCounter"
   | "LeakageDetector"
   | "PressureSensor"
+  | "Repeater"
   | "Unknown";
 
 export type FieldProperty = "STATUS" | "DEPRECATED" | "HIDDEN" | "INCLUDE_TPL_STATUS";
