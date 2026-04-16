@@ -1,5 +1,5 @@
 // vario451 — auto-generated registry stub.
-// Source: upstream wmbusmeters driver.
+// Source: upstream wmbusmeters driver definition.
 //
 // Registers the driver with correct MVTs and library fields so the registry
 // resolves its name. Specialised field extraction + mfct-specific quirks are
@@ -18,25 +18,6 @@ export const vario451 = defineDriver({
     { manufacturer: flagToManufacturer("TCH"), version: 0xc3, type: 0x27 },
   ],
   defaultFields: "name,id,total_m3,status,timestamp",
-  libraryFields: ["total_m3", "meter_datetime"],
-  fields: [
-    {
-      kind: "string",
-      name: "status",
-      description: "Status and error flags.",
-      properties: ["INCLUDE_TPL_STATUS"],
-      match: { measurementType: "Instantaneous", vifRange: "ErrorFlags" },
-      lookup: {
-        rules: [
-          {
-            name: "ERROR_FLAGS",
-            mapType: "BitToString",
-            maskBits: 0xffff,
-            defaultMessage: "OK",
-            map: [],
-          },
-        ],
-      },
-    },
-  ],
+  libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
+  fields: [],
 });

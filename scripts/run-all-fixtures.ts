@@ -1,0 +1,99 @@
+// Run every harvested fixture through the pipeline and report which drivers
+// are decoding correctly vs producing diffs. Used as a feedback loop when
+// batch-porting drivers.
+
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { decodeWmbusHexSync } from "../src/api.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FIXTURES_PATH = resolve(__dirname, "..", "test", "fixtures", "upstream.json");
+
+interface Fixture {
+  source: string;
+  driver: string;
+  name: string;
+  id: string;
+  key: string;
+  hex: string;
+  expected: Record<string, unknown>;
+}
+const FIXTURES = JSON.parse(readFileSync(FIXTURES_PATH, "utf8")) as Fixture[];
+
+function isShort(hex: string): boolean {
+  const c = hex.replace(/[^0-9A-Fa-f]/g, "");
+  if (c.length < 22) return false;
+  return Number.parseInt(c.slice(0, 2), 16) < 0x28 && Number.parseInt(c.slice(20, 22), 16) === 0x8d;
+}
+function isFormatB(hex: string): boolean {
+  const c = hex.replace(/[^0-9A-Fa-f]/g, "");
+  return c.slice(0, 2).toLowerCase() === "68" && c.slice(6, 8).toLowerCase() === "68";
+}
+
+const byDriver = new Map<string, { pass: number; fail: number; firstFail?: string }>();
+
+for (const fx of FIXTURES) {
+  if (isShort(fx.hex) || isFormatB(fx.hex)) continue;
+  const key = fx.key === "NOKEY" ? "" : fx.key;
+  let actual: Record<string, unknown>;
+  try {
+    actual = decodeWmbusHexSync(fx.hex, fx.driver, key, {
+      name: fx.name,
+      idOverride: fx.id,
+      timestampOverride: "1111-11-11T11:11:11Z",
+    });
+  } catch (err) {
+    const stat = byDriver.get(fx.driver) ?? { pass: 0, fail: 0 };
+    stat.fail++;
+    if (!stat.firstFail) stat.firstFail = `threw: ${(err as Error).message.slice(0, 80)}`;
+    byDriver.set(fx.driver, stat);
+    continue;
+  }
+  const match = JSON.stringify(actual) === JSON.stringify(fx.expected);
+  const stat = byDriver.get(fx.driver) ?? { pass: 0, fail: 0 };
+  if (match) stat.pass++;
+  else {
+    stat.fail++;
+    if (!stat.firstFail) {
+      const expectedKeys = new Set(Object.keys(fx.expected));
+      const actualKeys = new Set(Object.keys(actual));
+      const missing = [...expectedKeys].filter((k) => !actualKeys.has(k));
+      const extra = [...actualKeys].filter((k) => !expectedKeys.has(k));
+      stat.firstFail = `missing=[${missing.slice(0, 3).join(",")}] extra=[${extra.slice(0, 3).join(",")}]`;
+    }
+  }
+  byDriver.set(fx.driver, stat);
+}
+
+const sorted = [...byDriver.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+let totalPass = 0;
+let totalFail = 0;
+let green = 0;
+let red = 0;
+for (const [driver, stat] of sorted) {
+  totalPass += stat.pass;
+  totalFail += stat.fail;
+  if (stat.fail === 0) green++;
+  else red++;
+}
+
+console.log(`Total fixtures passing: ${totalPass}`);
+console.log(`Total fixtures failing: ${totalFail}`);
+console.log(`Drivers with 100% pass: ${green}`);
+console.log(`Drivers with any fails: ${red}`);
+console.log();
+
+console.log("Drivers with 100% fixture parity:");
+for (const [d, s] of sorted) {
+  if (s.fail === 0 && s.pass > 0) console.log(`  ✓ ${d} (${s.pass})`);
+}
+
+console.log();
+console.log("Drivers with diffs (hint = one failing fixture):");
+for (const [d, s] of sorted) {
+  if (s.fail > 0) {
+    console.log(`  × ${d} ${s.pass}/${s.pass + s.fail}  ${s.firstFail ?? ""}`);
+  }
+}

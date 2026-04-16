@@ -1,5 +1,5 @@
 // vario411 — auto-generated registry stub.
-// Source: upstream wmbusmeters driver.
+// Source: upstream wmbusmeters driver definition.
 //
 // Registers the driver with correct MVTs and library fields so the registry
 // resolves its name. Specialised field extraction + mfct-specific quirks are
@@ -16,56 +16,12 @@ export const vario411 = defineDriver({
   mvt: [{ manufacturer: flagToManufacturer("TCH"), version: 0x04, type: 0x28 }],
   defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
   libraryFields: [
+    "total_energy_consumption_kwh",
+    "total_volume_m3",
     "meter_datetime",
     "flow_temperature_c",
     "return_temperature_c",
     "volume_flow_m3h",
   ],
-  fields: [
-    {
-      kind: "string",
-      name: "status",
-      description: "Status and error flags.",
-      properties: ["INCLUDE_TPL_STATUS"],
-      match: { measurementType: "Instantaneous", vifRange: "ErrorFlags" },
-      lookup: {
-        rules: [
-          {
-            name: "ERROR_FLAGS",
-            mapType: "BitToString",
-            maskBits: 0xffff,
-            defaultMessage: "OK",
-            map: [],
-          },
-        ],
-      },
-    },
-    {
-      kind: "numeric",
-      name: "total",
-      description: "Total energy consumption.",
-      quantity: "Energy",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF" },
-    },
-    {
-      kind: "numeric",
-      name: "total_volume",
-      description: "Total volume of heating media.",
-      quantity: "Volume",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "Volume" },
-    },
-    {
-      kind: "numeric",
-      name: "power",
-      description: "Current power.",
-      quantity: "Power",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "AnyPowerVIF" },
-    },
-  ],
+  fields: [],
 });

@@ -95,16 +95,28 @@ function parseXmq(path: string): Meta | null {
 function libraryFieldsFor(meterType: string): string[] {
   switch (meterType) {
     case "WaterMeter":
-      return ["total_m3", "meter_datetime"];
+      return ["total_m3", "target_m3", "target_date", "meter_datetime"];
     case "HeatMeter":
     case "HeatCoolingMeter":
-      return ["meter_datetime", "flow_temperature_c", "return_temperature_c", "volume_flow_m3h"];
+      return [
+        "total_energy_consumption_kwh",
+        "total_volume_m3",
+        "meter_datetime",
+        "flow_temperature_c",
+        "return_temperature_c",
+        "volume_flow_m3h",
+      ];
     case "ElectricityMeter":
-      return ["meter_datetime"];
+      return ["total_energy_consumption_kwh", "meter_datetime"];
     case "GasMeter":
       return ["total_m3", "meter_datetime"];
     case "HeatCostAllocationMeter":
-      return ["consumption_hca", "target_hca", "target_date", "meter_datetime"];
+      return [
+        "current_consumption_hca",
+        "consumption_at_set_date_hca",
+        "set_date",
+        "meter_datetime",
+      ];
     default:
       return ["meter_datetime"];
   }
@@ -128,52 +140,11 @@ function defaultFieldsFor(meterType: string): string {
   }
 }
 
-function extraFieldsFor(meterType: string): string {
-  switch (meterType) {
-    case "HeatMeter":
-    case "HeatCoolingMeter":
-      return `
-    {
-      kind: "numeric",
-      name: "total",
-      description: "Total energy consumption.",
-      quantity: "Energy",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF" },
-    },
-    {
-      kind: "numeric",
-      name: "total_volume",
-      description: "Total volume of heating media.",
-      quantity: "Volume",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "Volume" },
-    },
-    {
-      kind: "numeric",
-      name: "power",
-      description: "Current power.",
-      quantity: "Power",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "AnyPowerVIF" },
-    },`;
-    case "ElectricityMeter":
-      return `
-    {
-      kind: "numeric",
-      name: "total_energy_consumption",
-      description: "Total energy consumption.",
-      quantity: "Energy",
-      scaling: "Auto",
-      signedness: "Signed",
-      match: { measurementType: "Instantaneous", vifRange: "AnyEnergyVIF" },
-    },`;
-    default:
-      return "";
-  }
+function extraFieldsFor(_meterType: string): string {
+  // Specialised fields stay out of auto-generated stubs — library fields
+  // cover the common cases; driver-specific fields are added by hand when
+  // a fixture-parity pass is made on that driver.
+  return "";
 }
 
 function mvtToTs(v: MVT): string {
@@ -220,25 +191,7 @@ ${mvtLines}
   ],
   defaultFields: "${defaultFieldsFor(m.meterType)}",
   libraryFields: ${libArr},
-  fields: [
-    {
-      kind: "string",
-      name: "status",
-      description: "Status and error flags.",
-      properties: ["INCLUDE_TPL_STATUS"],
-      match: { measurementType: "Instantaneous", vifRange: "ErrorFlags" },
-      lookup: {
-        rules: [
-          {
-            name: "ERROR_FLAGS",
-            mapType: "BitToString",
-            maskBits: 0xffff,
-            defaultMessage: "OK",
-            map: [],
-          },
-        ],
-      },
-    },${extras}
+  fields: [${extras}
   ],
 });
 `;
@@ -262,11 +215,16 @@ for (const f of readdirSync(XMQ_DIR)) {
   if (m && !all[m.name]) all[m.name] = m;
 }
 
-const ALREADY_DONE = new Set(
-  readdirSync(BUILTIN)
-    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
-    .map((f) => f.replace(/\.ts$/, "")),
-);
+// Don't overwrite hand-maintained drivers. Auto-generated stubs start with
+// the sentinel comment; anything else is hand-maintained and skipped.
+const HAND_MAINTAINED = new Set<string>();
+for (const f of readdirSync(BUILTIN)) {
+  if (!f.endsWith(".ts") || f === "index.ts") continue;
+  const first = readFileSync(join(BUILTIN, f), "utf8").slice(0, 200);
+  if (!first.includes("auto-generated registry stub")) {
+    HAND_MAINTAINED.add(f.replace(/\.ts$/, ""));
+  }
+}
 
 // Seed driver names Metbox actually references.
 const SEED =
@@ -279,7 +237,7 @@ let skipped = 0;
 const missing: string[] = [];
 
 for (const name of SEED) {
-  if (ALREADY_DONE.has(safeIdent(name))) {
+  if (HAND_MAINTAINED.has(safeIdent(name))) {
     skipped++;
     continue;
   }
@@ -291,8 +249,8 @@ for (const name of SEED) {
   const file = join(BUILTIN, `${safeIdent(name)}.ts`);
   writeFileSync(file, generate(meta), "utf8");
   generated++;
-  console.log(`  gen ${name} (${meta.meterType}, ${meta.mvts.length} MVTs)`);
 }
+console.log(`  regenerated ${generated} stub(s)`);
 
 console.log();
 console.log(`Generated: ${generated}`);
