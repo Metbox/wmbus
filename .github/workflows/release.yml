@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
 
 # `id-token: write` enables npm package provenance attestation.
 permissions:
