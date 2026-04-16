@@ -19,7 +19,12 @@
 import { readReal32 } from "../data/decode-values.js";
 import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
-import { isInsideVifRange, vifScaleExponent, vifTimeUnitFactor } from "../data/vif-range.js";
+import {
+  isInsideVifRange,
+  vifScaleExponent,
+  vifTimeUnitFactor,
+  vifUnitConversionFactor,
+} from "../data/vif-range.js";
 import { libraryField } from "./common-fields.js";
 import { decodeTplStatusWithMfct } from "./tpl-status.js";
 import { applyLookup } from "./translate.js";
@@ -46,6 +51,8 @@ export interface InterpretContext {
    * fixture behaviour; runtime callers pass the real wall-clock timestamp.
    */
   timestampOverride?: string;
+  /** Full plaintext (post-TPL) — drivers with mfct-specific blobs need it. */
+  plaintext?: Uint8Array;
 }
 
 /**
@@ -100,10 +107,12 @@ export function interpret(
     const picked = matches[indexNr - 1];
 
     if (!picked) {
-      // String-with-lookup fields tagged INCLUDE_TPL_STATUS fall back to
-      // decoding the TPL status byte (bits 0-4 standard + bits 5-7 mfct).
-      if (field.kind === "string" && field.lookup && hasStatusFallback(field)) {
-        out[field.name] = decodeTplStatusWithMfct(ctx.tplStatus ?? 0, field.lookup);
+      // String fields tagged INCLUDE_TPL_STATUS fall back to decoding the TPL
+      // status byte (bits 0-4 standard + bits 5-7 mfct). Driver lookup (if
+      // any) handles the mfct bits; without a lookup, unknown mfct bits are
+      // emitted as UNKNOWN_<hex>.
+      if (field.kind === "string" && hasStatusFallback(field)) {
+        out[field.name] = decodeTplStatusWithMfct(ctx.tplStatus ?? 0, field.lookup ?? null);
       }
       continue;
     }
@@ -127,7 +136,12 @@ export function interpret(
   out.timestamp = ctx.timestampOverride ?? isoTimestampNow();
 
   if (driver.postprocess) {
-    driver.postprocess({ driver, dvEntries, output: out });
+    driver.postprocess({
+      driver,
+      dvEntries,
+      output: out,
+      plaintext: ctx.plaintext,
+    });
   }
 
   return out;
@@ -180,6 +194,32 @@ function emit(
     const r = extractString(picked, field);
     if (r !== null) out[r.key] = r.value;
   }
+}
+
+/**
+ * Public variant for postprocess hooks that need to emit a declared field
+ * from a synthetic DVEntry (e.g. Qundis walk-by frames). Returns the
+ * emitted key when successful, `null` when the entry couldn't be extracted.
+ */
+export function emitField(
+  out: Record<string, unknown>,
+  field: FieldDefinition,
+  entry: DVEntry,
+): string | null {
+  if (field.kind === "numeric") {
+    const r = extractNumeric(entry, field);
+    if (r !== null) {
+      out[r.key] = r.value;
+      return r.key;
+    }
+    return null;
+  }
+  const r = extractString(entry, field);
+  if (r !== null) {
+    out[r.key] = r.value;
+    return r.key;
+  }
+  return null;
 }
 
 // ---------- Field matching ----------
@@ -283,6 +323,10 @@ function extractNumeric(entry: DVEntry, field: NumericField): NumericResult | nu
     } else {
       const exp = vifScaleExponent(entry.vif);
       if (exp !== 0) scaled = raw * 10 ** exp;
+      // Cross-quantity conversion (MJ→kWh, MJ/h→kW, GJ→kWh) when the VIF
+      // block's native unit differs from the field's canonical unit.
+      const conv = vifUnitConversionFactor(entry.vif);
+      if (conv !== 1) scaled *= conv;
     }
   } else if (typeof field.scaling === "number") {
     scaled = raw * 10 ** field.scaling;
@@ -357,6 +401,9 @@ function canonicalUnitForQuantity(quantity: NumericField["quantity"]): Unit {
 // precision upstream reports in its test fixtures.
 function decimalsFor(unit: Unit, rawVif: number, _field: NumericField): number {
   const exp = vifScaleExponent(rawVif);
+  // Cross-unit conversions (MJ→kWh = ×1/3.6 etc.) multiply by a
+  // non-power-of-10 and so need more decimals to preserve precision.
+  if (vifUnitConversionFactor(rawVif) !== 1) return 6;
   switch (unit) {
     case "M3":
     case "LH":

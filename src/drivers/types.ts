@@ -171,6 +171,12 @@ export interface PostprocessContext {
   driver: DriverDefinition;
   dvEntries: DVEntry[];
   output: Record<string, unknown>;
+  /**
+   * Full plaintext payload (post-decryption) — for drivers that need to
+   * reach past the DIF/VIF parser (Techem Compact V, fhkvdataiii walk-by
+   * frames, and a handful of other mfct-specific messages).
+   */
+  plaintext?: Uint8Array;
 }
 
 export interface DriverDefinition {

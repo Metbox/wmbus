@@ -52,8 +52,9 @@ export function readLeBigUint(data: Uint8Array, length: number): bigint {
  */
 export function readLeInt(data: Uint8Array, length: number): number {
   const u = readLeUint(data, length);
-  const signBit = 1 << (length * 8 - 1);
-  if (length < 6 && u & signBit) {
+  // `1 << 31` is negative in JS (32-bit signed). Use 2**… to stay positive.
+  const signBit = 2 ** (length * 8 - 1);
+  if (length < 6 && u >= signBit) {
     return u - 2 * signBit;
   }
   if (length >= 6) {
@@ -250,10 +251,40 @@ export function readHexString(data: Uint8Array): string {
 }
 
 /**
- * Readable ASCII decode (reversed byte order — upstream wire convention for
- * text VIFs).
+ * Readable ASCII decode. Upstream's `extractReadableString` does this:
+ * - integer/binary DIFs (0x1-0x7, 0xD): if the bytes are "likely ASCII"
+ *   (all printable), reverse them and return as ASCII; otherwise render
+ *   as reversed hex (equivalent to upstream's `reverseBCD`).
+ *
+ * Single-byte values (e.g. model_version 0x01 → "01") hit the non-ASCII
+ * branch and come back as padded hex. Pass `reverse=false` for the
+ * `extractReadableStringReversed` variant which always tries ASCII.
  */
 export function readReadableString(data: Uint8Array, reverse = true): string {
-  const bytes = reverse ? Array.from(data).reverse() : Array.from(data);
-  return bytes.map((b) => (b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : "?")).join("");
+  if (reverse) {
+    if (isLikelyAscii(data)) {
+      const bytes = Array.from(data).reverse();
+      return bytes.map((b) => String.fromCharCode(b)).join("");
+    }
+    // Non-ASCII → reversed hex (upstream's reverseBCD on hex string).
+    let out = "";
+    for (let i = data.length - 1; i >= 0; i--) {
+      const b = data[i] as number;
+      out += b.toString(16).padStart(2, "0");
+    }
+    return out;
+  }
+  // Non-reversed variant: keep wire order, best-effort ASCII, else '?'.
+  return Array.from(data)
+    .map((b) => (b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : "?"))
+    .join("");
+}
+
+/** True if every byte is printable ASCII (matches upstream `isLikelyAscii`). */
+function isLikelyAscii(data: Uint8Array): boolean {
+  if (data.length === 0) return false;
+  for (const b of data) {
+    if (b < 0x20 || b >= 0x7f) return false;
+  }
+  return true;
 }

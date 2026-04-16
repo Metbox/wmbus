@@ -68,6 +68,13 @@ export function parseTelegram(hex: string): Telegram {
 
 /** Variant that takes already-decoded bytes. */
 export function parseTelegramBytes(frame: Uint8Array): Telegram {
+  // Wired M-Bus long-frame detection: 68 LL LL 68 ... CS 16.
+  // Translate into a synthetic wM-Bus-compatible layout so the rest of the
+  // pipeline doesn't need to care about the wire type.
+  if (frame.length >= 6 && frame[0] === 0x68 && frame[3] === 0x68 && frame[1] === frame[2]) {
+    return parseMBusTelegram(frame);
+  }
+
   if (frame.length < DLL_HEADER_SIZE) {
     throw new DecodeError(
       "link-layer",
@@ -101,6 +108,78 @@ export function parseTelegramBytes(frame: Uint8Array): Telegram {
   // bytes, slice() to the end is identical anyway.
   const payload = frame.slice(11);
   void expected;
+
+  return {
+    frame,
+    dll: {
+      dllLen,
+      dllC,
+      dllMfct,
+      dllId: decodeId(dllIdBytes),
+      dllIdBytes,
+      dllVersion,
+      dllType,
+    },
+    ci,
+    media: mediaType(dllType, dllMfct),
+    payload,
+  };
+}
+
+/**
+ * Parse a wired M-Bus long frame:
+ *
+ *   68 LL LL 68 C A CI <TPL+data> CS 16
+ *
+ * The DLL header layout differs from wireless wM-Bus, so we normalise the
+ * fields we can (the mfct/id/version/type come from the short TPL header
+ * that follows CI=0x72, if present) and synthesise a Telegram that the
+ * downstream TPL parser can drive.
+ */
+function parseMBusTelegram(frame: Uint8Array): Telegram {
+  const dllLen = frame[1] as number;
+  const expectedTotal = dllLen + 6; // 68 LL LL 68 ... CS 16
+  if (frame.length < expectedTotal) {
+    throw new DecodeError(
+      "link-layer",
+      `mbus frame truncated — L says ${dllLen} bytes of data but frame length is ${frame.length}`,
+      { frame, offset: 0 },
+    );
+  }
+  if (frame[frame.length - 1] !== 0x16) {
+    throw new DecodeError(
+      "link-layer",
+      `mbus frame missing 0x16 stop byte (got 0x${(frame[frame.length - 1] as number).toString(16)})`,
+      { frame },
+    );
+  }
+
+  // Strip 68 LL LL 68 prefix and CS 16 suffix.
+  const body = frame.subarray(4, frame.length - 2);
+  if (body.length < 3) {
+    throw new DecodeError("link-layer", "mbus body too short to hold C/A/CI", { frame });
+  }
+
+  const dllC = body[0] as number;
+  const _mbusAddr = body[1] as number; // primary address, not used downstream
+  void _mbusAddr;
+  const ci = body[2] as number;
+
+  // Long TPL header (CI 0x72): 4-byte id + 2-byte mfct + version + type then
+  // ACC/STS/CFG. Extract the address block so downstream media resolution
+  // uses the TPL-level identity rather than a synthetic MBUS primary.
+  let dllMfct = 0;
+  let dllIdBytes: Uint8Array = new Uint8Array(4);
+  let dllVersion = 0;
+  let dllType = 0;
+  if (ci === 0x72 && body.length >= 3 + 8) {
+    dllIdBytes = body.slice(3, 7);
+    dllMfct = ((body[8] as number) << 8) | (body[7] as number);
+    dllVersion = body[9] as number;
+    dllType = body[10] as number;
+  }
+
+  const payload = body.slice(3);
 
   return {
     frame,

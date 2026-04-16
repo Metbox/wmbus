@@ -67,6 +67,8 @@ export type Unit =
   | "VAR"
   | "VAH"
   | "HZ"
+  // Kamstrup-specific composite unit (m³·°C — temperature-weighted volume)
+  | "M3C"
   // Generic
   | "COUNTER"
   | "TXT"
@@ -126,6 +128,8 @@ export function quantityOfUnit(u: Unit): Quantity {
       return "HCA";
     case "RH":
       return "RH";
+    case "M3C":
+      return "Energy";
     case "DateLT":
     case "DateTimeLT":
       return "PointInTime";
@@ -213,6 +217,8 @@ export function unitSuffix(u: Unit): string {
       return "hca";
     case "RH":
       return "rh";
+    case "M3C":
+      return "m3c";
     case "DateLT":
       return "date";
     case "DateTimeLT":
