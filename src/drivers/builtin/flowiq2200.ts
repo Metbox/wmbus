@@ -1,4 +1,4 @@
-// Kamstrup FlowIQ 2200 water meter.
+// Kamstrup FlowIQ 2200 water meter driver.
 //
 // Port of vendor/wmbusmeters@af48083/src/driver_flowiq2200.cc.
 
@@ -17,13 +17,62 @@ export const flowiq2200 = defineDriver({
     { manufacturer: KAM, version: 0x18, type: 0x16 },
     { manufacturer: KAM, version: 0x1f, type: 0x16 },
   ],
-  defaultFields: "name,id,total_m3,target_m3,flow_temperature_c,timestamp",
-  libraryFields: ["total_m3", "target_m3", "target_date"],
+  defaultFields:
+    "name,id,status,total_m3,target_m3,target_date,flow_m3h," +
+    "min_flow_temperature_c,max_flow_temperature_c,min_external_temperature_c," +
+    "max_flow_m3h,min_flow_m3h,max_external_temperature_c,timestamp",
   fields: [
+    {
+      kind: "string",
+      name: "status",
+      description: "Meter status.",
+      properties: ["STATUS"],
+      match: { difVifKey: "04FF23" },
+      lookup: {
+        rules: [
+          {
+            name: "ERROR_FLAGS",
+            mapType: "BitToString",
+            maskBits: 0xffffffff,
+            defaultMessage: "OK",
+            map: [
+              { value: 0x01, text: "DRY" },
+              { value: 0x02, text: "REVERSE" },
+              { value: 0x04, text: "LEAK" },
+              { value: 0x08, text: "BURST" },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      kind: "numeric",
+      name: "total",
+      description: "Total water consumption.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume" },
+    },
+    {
+      kind: "numeric",
+      name: "target",
+      description: "Water consumption at the beginning of this month.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: { measurementType: "Instantaneous", vifRange: "Volume", storageNr: 1 },
+    },
+    {
+      kind: "string",
+      name: "target_date",
+      description: "Date at the beginning of this month.",
+      match: { measurementType: "Instantaneous", vifRange: "Date", storageNr: 1 },
+    },
     {
       kind: "numeric",
       name: "flow",
-      description: "Current volume flow.",
+      description: "Current flow.",
       quantity: "Flow",
       scaling: "Auto",
       signedness: "Signed",
@@ -32,47 +81,106 @@ export const flowiq2200 = defineDriver({
     {
       kind: "numeric",
       name: "min_flow_temperature",
-      description: "Minimum flow temperature.",
+      description: "Minimum water temperature.",
       quantity: "Temperature",
       scaling: "Auto",
       signedness: "Signed",
-      match: { measurementType: "Minimum", vifRange: "FlowTemperature" },
+      match: {
+        measurementType: "Minimum",
+        vifRange: "FlowTemperature",
+        storageNr: 2,
+      },
     },
     {
       kind: "numeric",
       name: "max_flow_temperature",
-      description: "Maximum flow temperature.",
+      description: "Maximum water temperature.",
       quantity: "Temperature",
       scaling: "Auto",
       signedness: "Signed",
-      match: { measurementType: "Maximum", vifRange: "FlowTemperature" },
+      match: {
+        measurementType: "Maximum",
+        vifRange: "FlowTemperature",
+        storageNr: 2,
+      },
     },
     {
       kind: "numeric",
       name: "min_external_temperature",
-      description: "Minimum external temperature.",
+      description: "External temperature (storage 2).",
       quantity: "Temperature",
       scaling: "Auto",
       signedness: "Signed",
-      match: { measurementType: "Minimum", vifRange: "ExternalTemperature" },
+      match: {
+        measurementType: "Minimum",
+        vifRange: "ExternalTemperature",
+        storageNr: 2,
+      },
     },
     {
       kind: "numeric",
       name: "max_flow",
-      description: "Maximum flow recorded.",
+      description: "Maximum flow (storage 2).",
       quantity: "Flow",
       scaling: "Auto",
       signedness: "Signed",
-      match: { measurementType: "Maximum", vifRange: "VolumeFlow" },
+      match: {
+        measurementType: "Maximum",
+        vifRange: "VolumeFlow",
+        storageNr: 2,
+      },
     },
     {
       kind: "numeric",
       name: "min_flow",
-      description: "Minimum flow recorded.",
+      description: "Minimum flow (storage 2).",
       quantity: "Flow",
       scaling: "Auto",
       signedness: "Signed",
-      match: { measurementType: "Minimum", vifRange: "VolumeFlow" },
+      match: {
+        measurementType: "Minimum",
+        vifRange: "VolumeFlow",
+        storageNr: 2,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "max_external_temperature",
+      description: "Maximum external temperature (storage 1).",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Maximum",
+        vifRange: "ExternalTemperature",
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "min_external_temperature",
+      description: "Minimum external temperature (storage 1).",
+      quantity: "Temperature",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Minimum",
+        vifRange: "ExternalTemperature",
+        storageNr: 1,
+      },
+    },
+    {
+      kind: "numeric",
+      name: "max_flow",
+      description: "Maximum flow (storage 1).",
+      quantity: "Flow",
+      scaling: "Auto",
+      signedness: "Signed",
+      match: {
+        measurementType: "Maximum",
+        vifRange: "VolumeFlow",
+        storageNr: 1,
+      },
     },
   ],
 });
