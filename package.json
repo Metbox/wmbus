@@ -66,13 +66,13 @@
     "wmbusmeters"
   ],
   "author": "Metbox",
-  "homepage": "https://github.com/metbox/wmbus#readme",
+  "homepage": "https://github.com/Metbox/wmbus#readme",
   "bugs": {
-    "url": "https://github.com/metbox/wmbus/issues"
+    "url": "https://github.com/Metbox/wmbus/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/metbox/wmbus.git"
+    "url": "git+https://github.com/Metbox/wmbus.git"
   },
   "publishConfig": {
     "access": "public",

@@ -1,7 +1,7 @@
 # @metbox/wmbus
 
 [![npm](https://img.shields.io/npm/v/@metbox/wmbus.svg)](https://www.npmjs.com/package/@metbox/wmbus)
-[![CI](https://github.com/metbox/wmbus/actions/workflows/ci.yml/badge.svg)](https://github.com/metbox/wmbus/actions/workflows/ci.yml)
+[![CI](https://github.com/Metbox/wmbus/actions/workflows/ci.yml/badge.svg)](https://github.com/Metbox/wmbus/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 TypeScript implementation of the wireless M-Bus (wM-Bus) protocol and meter
