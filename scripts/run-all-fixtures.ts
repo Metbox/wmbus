@@ -31,6 +31,21 @@ function isFormatB(hex: string): boolean {
   return c.slice(0, 2).toLowerCase() === "68" && c.slice(6, 8).toLowerCase() === "68";
 }
 
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  const ka = Object.keys(a as object);
+  const kb = Object.keys(b as object);
+  if (ka.length !== kb.length) return false;
+  for (const k of ka) {
+    if (!Object.hasOwn(b as object, k)) return false;
+    if (!deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const byDriver = new Map<string, { pass: number; fail: number; firstFail?: string }>();
 
 for (const fx of FIXTURES) {
@@ -50,7 +65,7 @@ for (const fx of FIXTURES) {
     byDriver.set(fx.driver, stat);
     continue;
   }
-  const match = JSON.stringify(actual) === JSON.stringify(fx.expected);
+  const match = deepEqual(actual, fx.expected);
   const stat = byDriver.get(fx.driver) ?? { pass: 0, fail: 0 };
   if (match) stat.pass++;
   else {
