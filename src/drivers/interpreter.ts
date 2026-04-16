@@ -19,12 +19,7 @@
 import { readReal32 } from "../data/decode-values.js";
 import type { DVEntry } from "../data/dv-parser.js";
 import { type Unit, unitSuffix } from "../data/quantity.js";
-import {
-  isInsideVifRange,
-  vifEntryByName,
-  vifScaleExponent,
-  vifTimeUnitFactor,
-} from "../data/vif-range.js";
+import { isInsideVifRange, vifScaleExponent, vifTimeUnitFactor } from "../data/vif-range.js";
 import { libraryField } from "./common-fields.js";
 import { applyLookup } from "./translate.js";
 import type {
