@@ -40,6 +40,21 @@ const LIBRARY: Readonly<Record<string, FieldDefinition>> = Object.freeze({
     },
   },
 
+  total_forward_m3: {
+    kind: "numeric",
+    name: "total_forward",
+    description: "The total forward flow recorded.",
+    quantity: "Volume",
+    scaling: "Auto",
+    signedness: "Signed",
+    match: {
+      measurementType: "Instantaneous",
+      vifRange: "Volume",
+      // VIFCombinable "ForwardFlow" = 0x3b per LIST_OF_VIF_COMBINABLES.
+      vifCombinables: [0x3b],
+    },
+  },
+
   volume_flow_m3h: {
     kind: "numeric",
     name: "volume_flow",
