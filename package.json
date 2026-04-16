@@ -44,8 +44,7 @@
     "check": "biome check --write ./src ./test ./scripts",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "npm run build && changeset publish",
-    "prepublishOnly": "npm run clean && npm run build && npm test"
+    "prepare": "npm run build"
   },
   "dependencies": {},
   "devDependencies": {
@@ -73,9 +72,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Metbox/wmbus.git"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
   }
 }

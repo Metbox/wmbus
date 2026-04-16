@@ -4,11 +4,11 @@ on:
   push:
     branches: [develop]
 
-# `id-token: write` enables npm package provenance attestation.
+# `contents: write` lets the workflow push the "chore: release" commit,
+# create/update the Version Packages PR, push tags, and create GitHub Releases.
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 concurrency:
   group: release-${{ github.workflow }}-${{ github.ref }}
@@ -28,24 +28,59 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          registry-url: https://registry.npmjs.org
 
-      - run: npm ci
+      # `--ignore-scripts` skips the `prepare` hook (which builds). We
+      # run `npm run build` explicitly below.
+      - run: npm ci --ignore-scripts
 
       - run: npm test
 
       - run: npm run build
 
-      # Either opens / updates a "Version Packages" PR, or — if pending
-      # changesets have already been merged — runs `npm run release` to
-      # publish to npm with provenance.
-      - name: Create Release Pull Request or Publish
+      # If pending changesets exist, this opens / updates the
+      # "Version Packages" PR that bumps `package.json` and rolls the
+      # changesets into CHANGELOG.md. Once that PR merges, this step
+      # runs again and produces no PR — which means `hasChangesets` is
+      # false and the tag step below runs.
+      - name: Create Release Pull Request
+        id: changesets
         uses: changesets/action@v1
         with:
-          publish: npm run release
+          version: npm run version-packages
           commit: "chore: release"
           title: "chore: release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+
+      # Idempotent: creates `v<version>` git tag + GitHub Release only
+      # when the current version has no matching tag yet. That's the
+      # case exactly once per merged Version Packages PR.
+      - name: Tag and release
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+          if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists, nothing to do."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "${TAG}"
+          git push origin "${TAG}"
+          # Extract the section for this version from CHANGELOG.md (which
+          # Changesets just populated) and use it as release notes.
+          NOTES=$(awk -v ver="## ${VERSION}" '
+            $0 == ver { flag=1; next }
+            /^## / && flag { exit }
+            flag { print }
+          ' CHANGELOG.md)
+          if [ -z "${NOTES}" ]; then
+            NOTES="Release ${TAG}. See CHANGELOG.md."
+          fi
+          gh release create "${TAG}" \
+            --title "${TAG}" \
+            --notes "${NOTES}" \
+            --verify-tag
