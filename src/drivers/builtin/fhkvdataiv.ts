@@ -19,8 +19,7 @@ export const fhkvdataiv = defineDriver({
     { manufacturer: TCH, version: 0x69, type: 0x08 },
     { manufacturer: TCH, version: 0x94, type: 0x08 },
   ],
-  defaultFields:
-    "name,id,current_consumption_hca,set_date,consumption_at_set_date_hca,timestamp",
+  defaultFields: "name,id,current_consumption_hca,set_date,consumption_at_set_date_hca,timestamp",
   fields: [
     {
       kind: "string",

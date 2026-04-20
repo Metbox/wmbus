@@ -186,9 +186,7 @@ export const rfmamb = defineDriver({
     // becomes `device_datetime` in the JSON. Synthesise it from the first
     // DateTime DVEntry and strip any seconds tail.
     const e = ctx.dvEntries.find(
-      (x) =>
-        x.measurementType === "Instantaneous" &&
-        (x.vif & 0x7f) === 0x6d,
+      (x) => x.measurementType === "Instantaneous" && (x.vif & 0x7f) === 0x6d,
     );
     if (e && typeof e.asString === "string") {
       ctx.output.device_datetime = e.asString.slice(0, 16);

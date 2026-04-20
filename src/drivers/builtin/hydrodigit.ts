@@ -26,19 +26,19 @@ const MONTHS = [
 ];
 
 const VOLTAGE_MAP: Readonly<Record<number, number>> = Object.freeze({
-  0x01: 1.9,
-  0x02: 2.1,
-  0x03: 2.2,
-  0x04: 2.3,
-  0x05: 2.4,
-  0x06: 2.5,
-  0x07: 2.65,
-  0x08: 2.8,
-  0x09: 2.9,
-  0x0a: 3.05,
-  0x0b: 3.2,
-  0x0c: 3.35,
-  0x0d: 3.5,
+  1: 1.9,
+  2: 2.1,
+  3: 2.2,
+  4: 2.3,
+  5: 2.4,
+  6: 2.5,
+  7: 2.65,
+  8: 2.8,
+  9: 2.9,
+  10: 3.05,
+  11: 3.2,
+  12: 3.35,
+  13: 3.5,
 });
 
 const MASK_BATTERY_VOLTAGE_PRESENT = 1 << 0;

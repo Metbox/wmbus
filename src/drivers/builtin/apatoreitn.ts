@@ -57,20 +57,12 @@ export const apatoreitn = defineDriver({
     if (content.length < 16) return;
     content = content.slice(0, 16);
 
-    ctx.output.season_start_date = dateToString(
-      content[1] as number,
-      content[0] as number,
-    );
+    ctx.output.season_start_date = dateToString(content[1] as number, content[0] as number);
     ctx.output.previous_hca = 256 * (content[5] as number) + (content[4] as number);
     ctx.output.esb_date = dateToString(content[6] as number, content[7] as number);
     ctx.output.current_hca = 256 * (content[9] as number) + (content[8] as number);
-    ctx.output.current_date = dateToString(
-      content[10] as number,
-      content[11] as number,
-    );
-    ctx.output.temp_room_prev_avg_c =
-      (content[13] as number) + (content[12] as number) / 256;
-    ctx.output.temp_room_avg_c =
-      (content[15] as number) + (content[14] as number) / 256;
+    ctx.output.current_date = dateToString(content[10] as number, content[11] as number);
+    ctx.output.temp_room_prev_avg_c = (content[13] as number) + (content[12] as number) / 256;
+    ctx.output.temp_room_avg_c = (content[15] as number) + (content[14] as number) / 256;
   },
 });

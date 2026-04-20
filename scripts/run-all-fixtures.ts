@@ -90,7 +90,7 @@ let totalPass = 0;
 let totalFail = 0;
 let green = 0;
 let red = 0;
-for (const [driver, stat] of sorted) {
+for (const [, stat] of sorted) {
   totalPass += stat.pass;
   totalFail += stat.fail;
   if (stat.fail === 0) green++;

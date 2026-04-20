@@ -182,11 +182,7 @@ function counterFor(entry: DVEntry, kind: CounterKind): number {
 
 // ---------- Emission ----------
 
-function emit(
-  out: Record<string, unknown>,
-  field: FieldDefinition,
-  picked: DVEntry,
-): void {
+function emit(out: Record<string, unknown>, field: FieldDefinition, picked: DVEntry): void {
   if (field.kind === "numeric") {
     const r = extractNumeric(picked, field);
     if (r !== null) out[r.key] = r.value;

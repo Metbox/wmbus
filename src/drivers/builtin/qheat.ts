@@ -123,9 +123,7 @@ export const qheat = defineDriver({
     if (innerTpl && innerTpl.rawValue.length === 8) {
       // Re-render the id from the inner TPL (4 LE bytes, BCD-reversed hex).
       const [b0, b1, b2, b3, m0, m1, _ver, typ] = Array.from(innerTpl.rawValue) as number[];
-      const id = [b3, b2, b1, b0]
-        .map((b) => (b as number).toString(16).padStart(2, "0"))
-        .join("");
+      const id = [b3, b2, b1, b0].map((b) => (b as number).toString(16).padStart(2, "0")).join("");
       ctx.output.id = id;
       const mfct = (m1 as number) * 256 + (m0 as number);
       ctx.output.media = mediaType(typ as number, mfct);

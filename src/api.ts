@@ -105,8 +105,7 @@ export function decodeWmbusHexSync(
       // media from the inner TPL for electricity meters).
       if (
         def.meterType === "ElectricityMeter" &&
-        (media === "radio converter (meter side)" ||
-          media === "radio converter (system side)")
+        (media === "radio converter (meter side)" || media === "radio converter (system side)")
       ) {
         media = "electricity";
       }

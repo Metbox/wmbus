@@ -51,7 +51,8 @@ export const zenner0b = defineDriver({
     const target = le32(raw, start + 4);
     const total = le32(raw, start + 8);
 
-    ctx.output.status = status === 0 ? "OK" : `0x${status.toString(16).toUpperCase().padStart(8, "0")}`;
+    ctx.output.status =
+      status === 0 ? "OK" : `0x${status.toString(16).toUpperCase().padStart(8, "0")}`;
     ctx.output.target_m3 = round4(target / 256000);
     ctx.output.total_m3 = round4(total / 256000);
   },

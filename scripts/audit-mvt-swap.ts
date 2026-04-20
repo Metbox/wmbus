@@ -5,9 +5,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import "../src/drivers/builtin/index.js";
+import { lookupDriverByName } from "../src/drivers/registry.js";
 import { decodeTelegram } from "../src/protocol/pipeline.js";
 import { hexToBytes } from "../src/util/hex.js";
-import { lookupDriverByName } from "../src/drivers/registry.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const FIXTURES = resolve(__dirname, "..", "test", "fixtures", "upstream.json");
@@ -36,7 +36,7 @@ for (const fx of fixtures) {
   if (!def) continue;
   seen.add(fx.driver);
 
-  let assembled;
+  let assembled: ReturnType<typeof decodeTelegram>;
   try {
     const aesKey = fx.key && fx.key !== "NOKEY" ? hexToBytes(fx.key) : null;
     assembled = decodeTelegram(fx.hex, aesKey);
@@ -70,7 +70,10 @@ for (const fx of fixtures) {
     neither++;
     if (neitherSamples.length < 12) {
       const decl = def.mvt
-        .map((m) => `m=0x${m.manufacturer.toString(16).padStart(4, "0")} v=0x${m.version.toString(16).padStart(2, "0")} t=0x${m.type.toString(16).padStart(2, "0")}`)
+        .map(
+          (m) =>
+            `m=0x${m.manufacturer.toString(16).padStart(4, "0")} v=0x${m.version.toString(16).padStart(2, "0")} t=0x${m.type.toString(16).padStart(2, "0")}`,
+        )
         .join(" | ");
       neitherSamples.push(`  ${fx.driver.padEnd(20)} wire ${fmt}\n      decl: ${decl}`);
     }
