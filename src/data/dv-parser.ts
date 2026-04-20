@@ -82,27 +82,58 @@ export interface DvParseResult {
   trailing: Uint8Array;
   /** Number of bytes consumed from the input. */
   consumed: number;
+  /**
+   * Concatenated DIF+DIFE+VIF+VIFE bytes from every entry — the "format
+   * bytes" that Kamstrup compact frames reference by hash. Empty for
+   * compact-frame parses (`formatBytes` overrides) since upstream only
+   * caches hashes derived from long-frame parses.
+   */
+  formatBytes: Uint8Array;
+}
+
+export interface ParseDvOptions {
+  /** Absolute offset of `data[0]` within the original frame. Defaults to 0. */
+  startOffset?: number;
+  /**
+   * Override the DIF/VIF chain source buffer. When present, the parser reads
+   * DIF/VIF bytes from this buffer (at its own cursor) and data bytes from
+   * `data`. Used by CI=0x79 compact frames where the format bytes come from
+   * a previously-cached long-frame transmission.
+   */
+  formatBytes?: Uint8Array;
 }
 
 /**
  * Tokenize a plaintext payload into DVEntry records.
  *
  * @param data    The plaintext DV byte stream (post-decryption).
- * @param startOffset  Absolute offset of `data[0]` within the original
- *                     frame, used so DVEntry.offset is frame-absolute.
+ * @param optsOrStart  Either a numeric `startOffset` (legacy positional arg)
+ *                     or a `ParseDvOptions` object.
  */
-export function parseDv(data: Uint8Array, startOffset = 0): DvParseResult {
-  const entries: DVEntry[] = [];
-  let i = 0;
-  let trailingStart = data.length;
+export function parseDv(data: Uint8Array, optsOrStart: number | ParseDvOptions = 0): DvParseResult {
+  const opts: ParseDvOptions =
+    typeof optsOrStart === "number" ? { startOffset: optsOrStart } : optsOrStart;
+  const startOffset = opts.startOffset ?? 0;
+  const format: Uint8Array = opts.formatBytes ?? data;
+  const compact = opts.formatBytes !== undefined;
 
-  while (i < data.length) {
-    const difStart = i;
-    const dif = data[i] as number;
+  const entries: DVEntry[] = [];
+  let fp = 0; // cursor into `format`
+  let dp = 0; // cursor into `data` (same as fp when not compact)
+  let trailingStart = data.length;
+  const formatAccum: number[] = [];
+
+  const end = compact ? format.length : data.length;
+
+  while (compact ? fp < end : dp < end) {
+    const difStart = compact ? dp : fp;
+    if (fp >= format.length) break;
+    const dif = format[fp] as number;
 
     // 0x2F — padding. Consume and continue.
     if (dif === 0x2f) {
-      i += 1;
+      fp++;
+      if (!compact) dp = fp;
       continue;
     }
 
@@ -111,52 +142,59 @@ export function parseDv(data: Uint8Array, startOffset = 0): DvParseResult {
     // Stop markers / unknowns: 0x0F manufacturer-specific block, 0x1F "more
     // records in next telegram", or any unclassified DIF.
     if (dataKind === "Special") {
-      trailingStart = i;
+      trailingStart = compact ? dp : fp;
       break;
     }
 
     let difChain: DifChain;
     try {
-      difChain = parseDifChain(data, i);
+      difChain = parseDifChain(format, fp);
     } catch {
-      trailingStart = i;
+      trailingStart = compact ? dp : fp;
       break;
     }
-    i = difChain.endOffset;
+    const difFirstByte = format[fp] as number;
+    for (let k = fp; k < difChain.endOffset; k++) formatAccum.push(format[k] as number);
+    fp = difChain.endOffset;
+    if (!compact) dp = fp;
 
     let vifChain: VifChain;
     try {
-      vifChain = parseVifChain(data, i);
+      vifChain = parseVifChain(format, fp);
     } catch {
       // Broken VIF chain — stop cleanly.
       trailingStart = difStart;
       break;
     }
-    i = vifChain.endOffset;
+    const vifFirstByte = format[fp] as number;
+    for (let k = fp; k < vifChain.endOffset; k++) formatAccum.push(format[k] as number);
+    fp = vifChain.endOffset;
+    if (!compact) dp = fp;
 
     // Determine data length. Variable-length records use the next byte as
-    // their length. Anything with datalen < 0 that wasn't caught above is
-    // an unknown special function; bail.
+    // their length.
     let dataLen = difChain.datalen;
     if (dataLen === -1) {
-      if (i >= data.length) {
+      if (dp >= data.length) {
         trailingStart = difStart;
         break;
       }
-      dataLen = data[i] as number;
-      i++;
+      dataLen = data[dp] as number;
+      dp++;
+      if (!compact) fp = dp;
     }
     if (dataLen < 0) {
       trailingStart = difStart;
       break;
     }
-    if (i + dataLen > data.length) {
+    if (dp + dataLen > data.length) {
       trailingStart = difStart;
       break;
     }
 
-    const rawValue = data.slice(i, i + dataLen);
-    i += dataLen;
+    const rawValue = data.slice(dp, dp + dataLen);
+    dp += dataLen;
+    if (!compact) fp = dp;
 
     // Build the canonical key from all chain bytes, including the
     // variable-length VIF string (length byte + chars) so plain-text VIFs
@@ -168,9 +206,9 @@ export function parseDv(data: Uint8Array, startOffset = 0): DvParseResult {
       1 + difChain.difes.length + 1 + varBytes + vifChain.vifes.length,
     );
     let p = 0;
-    keyBytes[p++] = dif;
+    keyBytes[p++] = difFirstByte;
     for (const d of difChain.difes) keyBytes[p++] = d;
-    keyBytes[p++] = data[difChain.endOffset] as number;
+    keyBytes[p++] = vifFirstByte;
     if (varLen !== null) {
       keyBytes[p++] = varLen.length;
       for (const b of varLen) keyBytes[p++] = b;
@@ -190,17 +228,23 @@ export function parseDv(data: Uint8Array, startOffset = 0): DvParseResult {
       subunit: difChain.subunit,
       rawValue,
       kind: dataKind,
-      asNumber: decodeAsNumber(dif, vifChain.vif, rawValue),
-      asString: decodeAsString(dif, vifChain.vif, rawValue),
+      asNumber: decodeAsNumber(difFirstByte, vifChain.vif, rawValue),
+      asString: decodeAsString(difFirstByte, vifChain.vif, rawValue),
       asHex: readHexString(rawValue),
     };
     entries.push(entry);
   }
 
+  const consumed = compact ? dp : trailingStart;
+  // For compact parses, the caller owns the trailing buffer; we report
+  // whatever data bytes we didn't touch. For long-frame parses, `trailing`
+  // is the block after the last DV entry (often the 0x0F mfct trailer).
+  const trailing = compact ? data.slice(dp) : data.slice(trailingStart);
   return {
     entries,
-    trailing: data.slice(trailingStart),
-    consumed: trailingStart,
+    trailing,
+    consumed,
+    formatBytes: compact ? new Uint8Array(0) : new Uint8Array(formatAccum),
   };
 }
 

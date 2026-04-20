@@ -71,6 +71,7 @@ import "./lansenth.js";
 import "./lse_07_17.js";
 import "./lse_08.js";
 import "./maddalena.js";
+import "./microclima.js";
 import "./minomess.js";
 import "./mkradio3.js";
 import "./mkradio3a.js";

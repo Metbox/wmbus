@@ -16,6 +16,13 @@ export enum DiehlLfsrCheckMethod {
   CHECKSUM_AND_0XEF = 2, // final decoded byte sum & 0xEF must equal `checkValue`
 }
 
+/**
+ * Default Izar/PRIOS LFSR keys used when the meter owner hasn't programmed a
+ * custom key. Lifted verbatim from `manufacturer_specificities.cc:34-35`.
+ * Each is 8 hex bytes — `diehlConvertKey()` XORs the two halves into the 32-bit seed.
+ */
+export const PRIOS_DEFAULT_KEYS_HEX: readonly string[] = ["39BC8A10E66D83F8", "51728910E66D83F8"];
+
 /** Read a 32-bit big-endian unsigned integer starting at `offset`. */
 function uint32Be(data: Uint8Array, offset: number): number {
   // Use >>> 0 to force uint32 semantics (JS numbers are 53-bit IEEE-754).

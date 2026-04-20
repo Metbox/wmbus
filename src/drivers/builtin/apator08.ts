@@ -1,10 +1,9 @@
-// apator08 — auto-generated registry stub.
-// Source: upstream wmbusmeters driver definition.
+// Apator 08 water meter (IXML grammar-driven).
 //
-// Registers the driver with correct MVTs and library fields so the registry
-// resolves its name. Specialised field extraction + mfct-specific quirks are
-// not yet ported; production traffic will populate the standard library
-// fields and fall back to auto-driver behaviour for anything non-standard.
+// Port of vendor/wmbusmeters@af48083/drivers/src/apator08.xmq. The payload
+// after CI=0xA0 doesn't carry DIF/VIF bytes — the grammar says the first
+// four bytes are a `quad` annotated as DV 0413 (32-bit int Volume × 10^-3).
+// We synthesise the DIF + VIF prefix so the standard DV parser picks it up.
 
 import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
@@ -17,7 +16,28 @@ export const apator08 = defineDriver({
     { manufacturer: flagToManufacturer("APT"), version: 0x03, type: 0x03 },
     { manufacturer: flagToManufacturer("APT"), version: 0x0f, type: 0x0f },
   ],
-  defaultFields: "name,id,total_m3,status,timestamp",
-  libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
-  fields: [],
+  defaultFields: "name,id,total_m3,timestamp",
+  fields: [
+    {
+      kind: "numeric",
+      name: "total",
+      description: "Total water consumption.",
+      quantity: "Volume",
+      scaling: "Auto",
+      signedness: "Signed",
+      // `force_scale = 1/3` in the upstream grammar — apator08's volume is
+      // stored as "litres × 3", so divide by 3 after standard VIF scaling.
+      forceScale: 1 / 3,
+      match: { measurementType: "Instantaneous", vifRange: "Volume" },
+    },
+  ],
+  preprocess(plaintext) {
+    if (plaintext.length < 4) return plaintext;
+    // Prepend synthetic DV 0413 (DIF=04 signed int32, VIF=13 Volume × 10^-3).
+    const out = new Uint8Array(2 + 4);
+    out[0] = 0x04;
+    out[1] = 0x13;
+    out.set(plaintext.subarray(0, 4), 2);
+    return out;
+  },
 });

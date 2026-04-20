@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { decodeWmbusHexSync } from "../../src/api.js";
+import { createMeterState, decodeWmbusHexSync } from "../../src/api.js";
 import { listDriverNames } from "../../src/drivers/registry.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,22 +15,12 @@ interface Fixture {
   id: string;
   key: string;
   hex: string;
+  telegrams?: string[];
   expected: Record<string, unknown>;
 }
 const FIXTURES = JSON.parse(readFileSync(FIXTURES_PATH, "utf8")) as Fixture[];
 
 const TIMESTAMP_TEST = "1111-11-11T11:11:11Z";
-
-// Helper: is this a Kamstrup compact-format short telegram that needs the
-// Phase 6+ format-signature cache? L < 0x23 and CI=0x8D (ELL II) usually
-// means compact.
-function isShortFormCompact(hex: string): boolean {
-  const cleaned = hex.replace(/[^0-9A-Fa-f]/g, "");
-  if (cleaned.length < 22) return false;
-  const l = Number.parseInt(cleaned.slice(0, 2), 16);
-  const ci = Number.parseInt(cleaned.slice(20, 22), 16);
-  return l < 0x28 && ci === 0x8d;
-}
 
 function isFormatB(hex: string): boolean {
   const c = hex.replace(/[^0-9A-Fa-f]/g, "");
@@ -45,6 +35,10 @@ describe("driver fixture sweep (Wave A)", () => {
   // Wave A tracks concretely; adding a new driver to the registry +
   // registered name set expands coverage automatically.
   const WAVE_A_DRIVERS = [
+    "apator08",
+    "apator162",
+    "apator172",
+    "microclima",
     "multical21",
     "iperl",
     "op041a",
@@ -82,7 +76,6 @@ describe("driver fixture sweep (Wave A)", () => {
     const driverFixtures = FIXTURES.filter(
       (f) =>
         f.driver === driverName &&
-        !isShortFormCompact(f.hex) &&
         !isFormatB(f.hex) &&
         // Qundis "Q walk-by" proprietary container variants need processContent
         // (deferred to a later wave).
@@ -91,6 +84,10 @@ describe("driver fixture sweep (Wave A)", () => {
         // (UNKNOWN_C0, POWER_LOW) or mfct-specific model_version BCD —
         // both deferred to a later wave.
         !(driverName === "qcaloric" && (f.id === "25932395" || f.id === "60366655")) &&
+        // microclima "Heat" 93573086 is the 17-storage historical telegram;
+        // requires addNumericFieldWithCalculator + template field expansion
+        // (set_date_N derived from storage_counter and a base date). Deferred.
+        !(driverName === "microclima" && f.id === "93573086") &&
         // qcaloric MyElement2: both 50-byte normal (wire id mismatch) and
         // 74-byte walk-by variants (need processContent).
         !(driverName === "qcaloric" && f.id === "90919293") &&
@@ -116,7 +113,6 @@ describe("driver fixture sweep (Wave A)", () => {
           driverName === "qwaterv2" ||
           driverName === "elf2" ||
           driverName === "eltako" ||
-          driverName === "kampress" ||
           driverName === "supercal" ||
           driverName === "kamheat" ||
           driverName === "ime" ||
@@ -125,8 +121,6 @@ describe("driver fixture sweep (Wave A)", () => {
           driverName === "itronheat" ||
           driverName === "sensostar" ||
           driverName === "sharky" ||
-          driverName === "sharky774" ||
-          driverName === "izar" ||
           driverName === "flowiq2200"
         ) &&
         // Fixtures from simulation files that add extras (address, city,
@@ -150,15 +144,30 @@ describe("driver fixture sweep (Wave A)", () => {
       describe.each(driverFixtures)("fixture $source → $name id=$id", (fx) => {
         it("produces JSON matching upstream's expected output", () => {
           const key = fx.key === "NOKEY" ? "" : fx.key;
-          const result = decodeWmbusHexSync(fx.hex, fx.driver, key, {
-            name: fx.name,
-            // Pass through the configured id — a few upstream test fixtures
-            // (qcaloric MyElement2 second telegram) have wire bytes that don't
-            // match the configured/JSON id. Upstream's tests use the configured
-            // id; we mirror that.
-            idOverride: fx.id,
-            timestampOverride: TIMESTAMP_TEST,
-          });
+          // Multi-telegram fixtures (kampress, kamheat Heato, …) feed each
+          // telegram through a shared MeterState so the Kamstrup format-
+          // signature cache populated by the long frame is available to the
+          // compact follow-up. Only the LAST decode is checked against
+          // `expected` — intermediate outputs are "state priming" and
+          // upstream discards them.
+          const telegrams = fx.telegrams ?? [fx.hex];
+          // Always create a MeterState — it seeds upstream's hard-coded
+          // Kamstrup format signatures so isolated compact frames (no prior
+          // long telegram) still decode against those well-known hashes.
+          const meterState = createMeterState();
+          let result: Record<string, unknown> | null = null;
+          for (const hex of telegrams) {
+            result = decodeWmbusHexSync(hex, fx.driver, key, {
+              name: fx.name,
+              // Pass through the configured id — a few upstream test fixtures
+              // (qcaloric MyElement2 second telegram) have wire bytes that
+              // don't match the configured/JSON id. Upstream's tests use the
+              // configured id; we mirror that.
+              idOverride: fx.id,
+              timestampOverride: TIMESTAMP_TEST,
+              meterState,
+            });
+          }
           expect(result).toEqual(fx.expected);
         });
       });

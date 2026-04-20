@@ -53,6 +53,8 @@ export interface InterpretContext {
   timestampOverride?: string;
   /** Full plaintext (post-TPL) — drivers with mfct-specific blobs need it. */
   plaintext?: Uint8Array;
+  /** Full wire frame (L C M A V T CI …) — used by Diehl-family postprocess hooks. */
+  frame?: Uint8Array;
 }
 
 /**
@@ -141,6 +143,7 @@ export function interpret(
       dvEntries,
       output: out,
       plaintext: ctx.plaintext,
+      frame: ctx.frame,
     });
   }
 
@@ -244,16 +247,28 @@ function matchesField(entry: DVEntry, matcher: FieldMatcher): boolean {
   }
 
   // VIFCombinables.
-  if (matcher.vifCombinables !== undefined) {
-    if (matcher.vifCombinables.includes(-1)) {
+  const hasExact = matcher.vifCombinables !== undefined;
+  const hasRange = matcher.vifCombinableRange !== undefined;
+  if (hasExact || hasRange) {
+    if (hasExact && matcher.vifCombinables?.includes(-1)) {
       // "Any" marker: accept entries regardless of their combinables.
-    } else if (matcher.vifCombinables.length === 0) {
-      // Explicit empty list: require no combinables.
-      if (entry.combinables.length > 0) return false;
     } else {
-      // Require every declared combinable to be present on the entry.
-      for (const required of matcher.vifCombinables) {
-        if (!entry.combinables.includes(required)) return false;
+      if (hasExact) {
+        const list = matcher.vifCombinables as number[];
+        if (list.length === 0) {
+          // Explicit empty list: require no combinables.
+          if (entry.combinables.length > 0) return false;
+        } else {
+          // Require every declared combinable to be present on the entry.
+          for (const required of list) {
+            if (!entry.combinables.includes(required)) return false;
+          }
+        }
+      }
+      if (hasRange) {
+        const { from, to } = matcher.vifCombinableRange as { from: number; to: number };
+        // Require at least one combinable to fall inside [from, to].
+        if (!entry.combinables.some((c) => c >= from && c <= to)) return false;
       }
     }
   } else {

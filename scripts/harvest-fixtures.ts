@@ -37,8 +37,19 @@ export interface FixtureRecord {
   id: string;
   /** 32-hex AES-128 key, or "NOKEY" when the telegram is unencrypted. */
   key: string;
-  /** Raw telegram hex exactly as upstream writes it — may contain `_` separators. */
+  /**
+   * Raw telegram hex. For single-telegram fixtures this is the full hex; for
+   * multi-telegram sequences it's the LAST telegram — runners that don't
+   * implement per-meter state can fall back to checking the last frame only.
+   */
   hex: string;
+  /**
+   * Multi-telegram sequences (kampress / qcaloric / kamheat Heato). When
+   * absent the record is single-telegram and `hex` is authoritative; when
+   * present, feed the list in order through the same meter instance and
+   * compare the final output against `expected`.
+   */
+  telegrams?: string[];
   /** Expected JSON output, as a parsed object. */
   expected: Record<string, unknown>;
 }
@@ -134,9 +145,11 @@ function harvestSimFile(path: string): FixtureRecord[] {
   const records: FixtureRecord[] = [];
 
   // Simulation files embed the same `|`-as-readability-separator convention
-  // that driver .cc `// Test:` blocks use. Match greedily across all inner
-  // pipes — hexToBytes strips them out downstream.
-  const telegramRe = /^telegram=\|(.+)\|/;
+  // that driver .cc `// Test:` blocks use. A handful of fixtures omit the
+  // trailing `|` (e.g. simulation_izars.txt IzarWater3), so match everything
+  // after `telegram=` to end of line and strip one optional wrapping pipe
+  // on each side — inner pipes get dropped later by `hexToBytes`.
+  const telegramRe = /^telegram=(.+?)\s*$/;
 
   let pendingHex: string | null = null;
 
@@ -149,7 +162,7 @@ function harvestSimFile(path: string): FixtureRecord[] {
 
     const telegramMatch = telegramRe.exec(line);
     if (telegramMatch) {
-      pendingHex = telegramMatch[1] as string;
+      pendingHex = normaliseSimHex(telegramMatch[1] as string);
       continue;
     }
 
@@ -184,6 +197,22 @@ function harvestSimFile(path: string): FixtureRecord[] {
 function stringField(obj: Record<string, unknown>, key: string): string | null {
   const v = obj[key];
   return typeof v === "string" ? v : null;
+}
+
+/**
+ * Clean up the hex captured from a simulation line. Handles the three
+ * conventions upstream uses:
+ *   - bare hex (no separators)
+ *   - pipe-wrapped:   |HEX|                 — strip both pipes
+ *   - with time tag:  |HEX|+0               — strip trailing `|+N`, then strip pipes
+ *   - inner pipe:     |HEX_A|HEX_B          — strip leading pipe only; inner
+ *                                             pipes stay and hexToBytes drops them
+ */
+function normaliseSimHex(raw: string): string {
+  let h = raw.replace(/\|\s*\+\d+\s*$/, "").replace(/\+\d+\s*$/, "");
+  if (h.startsWith("|")) h = h.slice(1);
+  if (h.endsWith("|")) h = h.slice(0, -1);
+  return h.trim();
 }
 
 /**
@@ -233,14 +262,25 @@ function harvestXmqFile(path: string): FixtureRecord[] {
     const body = content.slice(bodyStart, i - 1);
 
     const argsMatch = /\bargs\s*=\s*'([^']*)'/.exec(body);
-    const telegramMatch = /\btelegram\s*=\s*([^\s]+)/.exec(body);
+    // Support both bare (`telegram = AABB…`) and quoted (`telegram = '...'`)
+    // forms — upstream's multi-telegram tests wrap the list in single quotes
+    // so the XMQ parser keeps the whitespace-separated entries together.
+    const telegramMatch = /\btelegram\s*=\s*(?:'([\s\S]*?)'|(\S+))/.exec(body);
     const jsonMatch = /\bjson\s*=\s*'([\s\S]*?)'\s*(?:\n|$|fields\s*=)/.exec(body);
     if (!argsMatch || !telegramMatch || !jsonMatch) continue;
 
     const argTokens = (argsMatch[1] as string).trim().split(/\s+/);
     if (argTokens.length < 4) continue;
     const [name, driver, id, key] = argTokens;
-    const hex = (telegramMatch[1] as string).trim();
+    const rawTelegram = ((telegramMatch[1] ?? telegramMatch[2]) as string).trim();
+    // Split the whitespace-separated telegrams out of the quoted string so a
+    // multi-telegram fixture carries a `telegrams[]` array. Single-telegram
+    // fixtures keep `hex` as authoritative and omit the array.
+    const telegrams = rawTelegram
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    const hex = telegrams[telegrams.length - 1] as string;
 
     let expected: Record<string, unknown>;
     try {
@@ -251,7 +291,7 @@ function harvestXmqFile(path: string): FixtureRecord[] {
       );
     }
 
-    records.push({
+    const record: FixtureRecord = {
       source,
       driver: driver as string,
       name: name as string,
@@ -259,7 +299,9 @@ function harvestXmqFile(path: string): FixtureRecord[] {
       key: key as string,
       hex,
       expected,
-    });
+    };
+    if (telegrams.length > 1) record.telegrams = telegrams;
+    records.push(record);
   }
 
   return records;

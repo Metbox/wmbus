@@ -7,10 +7,12 @@
 // even though the TS implementation is synchronous.
 
 import { parseDv } from "./data/dv-parser.js";
+import type { MeterState } from "./data/meter-state.js";
 import { runAutoDriver } from "./drivers/auto.js";
 import { interpret } from "./drivers/interpreter.js";
 import { listDriverNames, lookupDriverByName, registerDriver } from "./drivers/registry.js";
 import type { DriverDefinition } from "./drivers/types.js";
+import { crc16En13757 } from "./protocol/crc.js";
 import { decodeTelegram as runPipeline } from "./protocol/pipeline.js";
 import { hexToBytes } from "./util/hex.js";
 
@@ -45,6 +47,12 @@ export interface DecodeOptions {
    * Defaults to the current wall-clock in ISO-8601 UTC with second precision.
    */
   timestampOverride?: string;
+  /**
+   * Optional per-meter state that survives across multiple `decodeWmbusHex`
+   * calls. Required for decoding Kamstrup CI=0x79 compact frames (the format
+   * bytes are cached from a prior long-frame transmission).
+   */
+  meterState?: MeterState;
 }
 
 /**
@@ -88,14 +96,13 @@ export function decodeWmbusHexSync(
     return out;
   }
 
-  const { entries: dvEntries } = parseDv(assembled.plaintext);
-
   // Fall back to the driver's meterType-implied media if the wire's media
   // string is "Unknown" — upstream's MeterType-default kicks in here for
   // Diehl variants whose type byte (e.g. 0x8B) isn't in the standard table.
   let media = assembled.effectiveMedia;
+  let def: DriverDefinition | undefined;
   if (driver !== "auto") {
-    const def = lookupDriverByName(driver);
+    def = lookupDriverByName(driver) ?? undefined;
     if (def) {
       if (media === "Unknown") {
         media = mediaForMeterType(def.meterType) ?? media;
@@ -112,13 +119,68 @@ export function decodeWmbusHexSync(
     }
   }
 
+  // Driver-level preprocess runs between TPL-decryption and DV-parsing. Used
+  // by Diehl PRIOS drivers (izar, sharky774) to descramble LFSR-protected
+  // payloads before the DV parser sees them.
+  let plaintext = assembled.plaintext;
+  if (def?.preprocess) {
+    const dllIdBytes = assembled.telegram.dll.dllIdBytes;
+    const dllAddress = new Uint8Array(6);
+    dllAddress.set(dllIdBytes, 0);
+    dllAddress[4] = assembled.telegram.dll.dllVersion;
+    dllAddress[5] = assembled.telegram.dll.dllType;
+    const dllMfct = assembled.telegram.dll.dllMfct;
+    const dllMfctBytes = new Uint8Array([dllMfct & 0xff, (dllMfct >> 8) & 0xff]);
+    plaintext = def.preprocess(plaintext, {
+      dllMfctBytes,
+      dllAddress,
+      dllType: assembled.telegram.dll.dllType,
+      dllVersion: assembled.telegram.dll.dllVersion,
+      frame: assembled.telegram.frame,
+      aesKey,
+    });
+  }
+
+  // Kamstrup compact frame (CI=0x79): the plaintext starts with
+  //   [format_sig_lo, format_sig_hi, data_crc_lo, data_crc_hi, ...data]
+  // The `format bytes` (DIF/VIF chain) were cached from a prior long-frame
+  // transmission. If no cached entry matches, the compact frame can't be
+  // decoded — we fall through with an empty DVEntry list.
+  let formatOverride: Uint8Array | undefined;
+  if (assembled.tpl?.ci === 0x79 && plaintext.length >= 4) {
+    const sigHash = ((plaintext[0] as number) | ((plaintext[1] as number) << 8)) & 0xffff;
+    const cached = options.meterState?.formatSignatureCache.get(sigHash);
+    if (cached) {
+      formatOverride = cached;
+      plaintext = plaintext.slice(4);
+    } else {
+      // No cache hit: emit an empty-result output so the caller can retry
+      // once a long-frame telegram populates the cache.
+      plaintext = new Uint8Array(0);
+    }
+  }
+
+  const dvParse = parseDv(plaintext, { formatBytes: formatOverride });
+  const dvEntries = dvParse.entries;
+
+  // If this was a long-frame parse (no format override in play), cache the
+  // accumulated format bytes under their CRC16-EN13757 hash so a follow-up
+  // compact frame can reconstruct the same DV layout.
+  if (!formatOverride && dvParse.formatBytes.length > 0 && options.meterState) {
+    const sigHash = crc16En13757(dvParse.formatBytes);
+    if (!options.meterState.formatSignatureCache.has(sigHash)) {
+      options.meterState.formatSignatureCache.set(sigHash, dvParse.formatBytes);
+    }
+  }
+
   const baseCtx = {
     meterName: options.name,
     id: options.idOverride ?? assembled.effectiveId,
     media,
     tplStatus: assembled.tplStatus,
     timestampOverride: options.timestampOverride,
-    plaintext: assembled.plaintext,
+    plaintext,
+    frame: assembled.telegram.frame,
   };
 
   if (driver === "auto") {
@@ -132,7 +194,6 @@ export function decodeWmbusHexSync(
     });
   }
 
-  const def = lookupDriverByName(driver);
   if (!def) {
     // Unknown driver name — fall back to auto resolution.
     return runAutoDriver(dvEntries, {
@@ -220,3 +281,4 @@ function mediaForMeterType(meterType: DriverDefinition["meterType"]): string | u
 }
 
 export type { DriverDefinition };
+export { createMeterState, type MeterState } from "./data/meter-state.js";

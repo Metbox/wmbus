@@ -6495,7 +6495,7 @@
     "name": "IzarWater3",
     "id": "20481979",
     "key": "NOKEY",
-    "hex": "1944A511780779194820A1",
+    "hex": "1944A511780779194820A1|21170013355F8EDB2D03C6912B1E37",
     "expected": {
       "_": "telegram",
       "media": "water",
@@ -6562,6 +6562,53 @@
       "transmit_period_s": 32,
       "manufacture_year": "2015",
       "timestamp": "1111-11-11T11:11:11Z"
+    }
+  },
+  {
+    "source": "simulation_izars.txt",
+    "driver": "izar",
+    "name": "IzarWater6",
+    "id": "48500375",
+    "key": "NOKEY",
+    "hex": "19442423860775035048A251520015BEB6B2E1ED623A18FC74A5",
+    "expected": {
+      "_": "telegram",
+      "media": "water",
+      "meter": "izar",
+      "name": "IzarWater6",
+      "id": "48500375",
+      "total_m3": 521.602,
+      "last_month_total_m3": 519.147,
+      "last_month_measure_date": "2021-11-15",
+      "remaining_battery_life_y": 9,
+      "current_alarms": "no_alarm",
+      "previous_alarms": "leakage",
+      "transmit_period_s": 8,
+      "timestamp": "1111-11-11T11:11:11Z"
+    }
+  },
+  {
+    "source": "simulation_izars.txt",
+    "driver": "izar",
+    "name": "IzarWater7",
+    "id": "208962f3",
+    "key": "NOKEY",
+    "hex": "1344304cf3628920Bc01a0712f03130ceB627a81",
+    "expected": {
+      "_": "telegram",
+      "current_alarms": "meter_blocked,mechanical_fraud",
+      "id": "208962f3",
+      "manufacture_year": "2009",
+      "media": "water",
+      "meter": "izar",
+      "name": "IzarWater7",
+      "prefix": "C09OA",
+      "previous_alarms": "mechanical_fraud",
+      "remaining_battery_life_y": 7.5,
+      "serial_number": "003763",
+      "timestamp": "1111-11-11T11:11:11Z",
+      "total_m3": 1248.146,
+      "transmit_period_s": 8
     }
   },
   {
@@ -8177,6 +8224,39 @@
   },
   {
     "source": "simulation_t1.txt",
+    "driver": "aventieswm",
+    "name": "Votten",
+    "id": "61070071",
+    "key": "NOKEY",
+    "hex": "76442104710007612507727100076121042507B5006005E2E95A3C2A1279A5415E6732679B43369FD5FDDDD783EEEBB48236D34E7C94AF0A18A5FDA5F7D64111EB42D4D891622139F2952F9D12A20088DFA4CF8123871123EE1F6C1DCEA414879DDB4E05E508F1826D7EFBA6964DF804C9261EA23BBF03",
+    "expected": {
+      "_": "telegram",
+      "media": "water",
+      "meter": "aventieswm",
+      "name": "Votten",
+      "id": "61070071",
+      "status": "OK",
+      "total_m3": 466.472,
+      "consumption_at_set_date_1_m3": 465.96,
+      "consumption_at_set_date_2_m3": 458.88,
+      "consumption_at_set_date_3_m3": 449.65,
+      "consumption_at_set_date_4_m3": 442.35,
+      "consumption_at_set_date_5_m3": 431.07,
+      "consumption_at_set_date_6_m3": 423.98,
+      "consumption_at_set_date_7_m3": 415.23,
+      "consumption_at_set_date_8_m3": 409.03,
+      "consumption_at_set_date_9_m3": 400.79,
+      "consumption_at_set_date_10_m3": 393.2,
+      "consumption_at_set_date_11_m3": 388.63,
+      "consumption_at_set_date_12_m3": 379.26,
+      "consumption_at_set_date_13_m3": 371.26,
+      "consumption_at_set_date_14_m3": 357.84,
+      "error_flags": "",
+      "timestamp": "1111-11-11T11:11:11Z"
+    }
+  },
+  {
+    "source": "simulation_t1.txt",
     "driver": "unismart",
     "name": "GasMeter",
     "id": "00043094",
@@ -9714,7 +9794,7 @@
     "name": "Pressing",
     "id": "77000317",
     "key": "NOKEY",
-    "hex": "'32442D2C1703007701188D280080E39322DB8F78_22696600126967000269660005FF091954A33A05FF0A99BD823A02FD170800",
+    "hex": "27442D2C1703007701188D280194E393226EC679DE735657_660067006600962B913A21B9423A0800",
     "expected": {
       "_": "telegram",
       "media": "pressure",
@@ -9728,7 +9808,11 @@
       "alfa_counter": 0.001108,
       "beta_counter": 0.000743,
       "timestamp": "1111-11-11T11:11:11Z"
-    }
+    },
+    "telegrams": [
+      "32442D2C1703007701188D280080E39322DB8F78_22696600126967000269660005FF091954A33A05FF0A99BD823A02FD170800",
+      "27442D2C1703007701188D280194E393226EC679DE735657_660067006600962B913A21B9423A0800"
+    ]
   },
   {
     "source": "kampress.xmq",
@@ -9736,7 +9820,7 @@
     "name": "Pressing",
     "id": "77000317",
     "key": "NOKEY",
-    "hex": "'32442D2C1703007701188D280080E39322DB8F78_22696600126967000269660005FF091954A33A05FF0A99BD823A02FD170800",
+    "hex": "27442D2C1703007701188D289554F295224ED579DE73188A_650066006600E80EA43A6B97A3BA0800",
     "expected": {
       "_": "telegram",
       "media": "pressure",
@@ -9750,7 +9834,11 @@
       "alfa_counter": 0.001252,
       "beta_counter": -0.001248,
       "timestamp": "1111-11-11T11:11:11Z"
-    }
+    },
+    "telegrams": [
+      "32442D2C1703007701188D280080E39322DB8F78_22696600126967000269660005FF091954A33A05FF0A99BD823A02FD170800",
+      "27442D2C1703007701188D289554F295224ED579DE73188A_650066006600E80EA43A6B97A3BA0800"
+    ]
   },
   {
     "source": "maddalena.xmq",

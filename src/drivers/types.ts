@@ -78,6 +78,13 @@ export interface FieldMatcher {
    */
   vifCombinables?: number[];
   /**
+   * VIFCombinable range — upstream's `LIST_OF_VIF_COMBINABLES` declares some
+   * combinables as inclusive ranges (e.g. `RecordErrorCodeMeterToController`
+   * = 0x15..0x1c). Matches when any of the entry's combinables falls inside
+   * this range. Combined with `vifCombinables` when both are set (both must hold).
+   */
+  vifCombinableRange?: { from: number; to: number };
+  /**
    * Which occurrence of a repeated match to return (1-based). Default 1.
    * Used by drivers that declare two fields with identical matchers.
    */
@@ -166,6 +173,10 @@ export interface PreprocessContext {
   dllAddress: Uint8Array;
   dllType: number;
   dllVersion: number;
+  /** Full wire frame (L C M A V T CI …). Diehl LFSR / PRIOS mixes bytes from here. */
+  frame: Uint8Array;
+  /** Optional user-supplied AES key bytes — Diehl drivers use this as an LFSR seed source. */
+  aesKey: Uint8Array | null;
 }
 
 export interface PostprocessContext {
@@ -173,11 +184,17 @@ export interface PostprocessContext {
   dvEntries: DVEntry[];
   output: Record<string, unknown>;
   /**
-   * Full plaintext payload (post-decryption) — for drivers that need to
-   * reach past the DIF/VIF parser (Techem Compact V, fhkvdataiii walk-by
-   * frames, and a handful of other mfct-specific messages).
+   * Full plaintext payload (post-decryption and any driver preprocess) —
+   * for drivers that need to reach past the DIF/VIF parser (Techem Compact
+   * V, fhkvdataiii walk-by frames, Diehl PRIOS descrambled blocks, and a
+   * handful of other mfct-specific messages).
    */
   plaintext?: Uint8Array;
+  /**
+   * Full wire frame (L C M A V T CI …). Diehl drivers read alarm bits and
+   * battery level directly from here since those bytes are un-scrambled.
+   */
+  frame?: Uint8Array;
 }
 
 export interface DriverDefinition {
