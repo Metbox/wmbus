@@ -18,8 +18,7 @@ export const elvsense = defineDriver({
     { manufacturer: ELV, version: 0x53, type: 0x1b },
     { manufacturer: ELV, version: 0x54, type: 0x1b },
   ],
-  defaultFields:
-    "name,id,temperature_c,humidity_rh,co2_ppm,battery_v,status,timestamp",
+  defaultFields: "name,id,temperature_c,humidity_rh,co2_ppm,battery_v,status,timestamp",
   fields: [
     {
       kind: "numeric",

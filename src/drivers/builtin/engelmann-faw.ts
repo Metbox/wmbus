@@ -12,8 +12,7 @@ export const engelmannFaw = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [{ manufacturer: EFE, version: 0x00, type: 0x07 }],
-  defaultFields:
-    "name,id,status,reporting_date,consumption_at_reporting_date_m3,timestamp",
+  defaultFields: "name,id,status,reporting_date,consumption_at_reporting_date_m3,timestamp",
   fields: [
     {
       kind: "string",

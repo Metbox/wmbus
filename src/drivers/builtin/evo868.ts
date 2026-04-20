@@ -18,8 +18,7 @@ export const evo868 = defineDriver({
     { manufacturer: MAD, version: 0x50, type: 0x07 },
     { manufacturer: MAD, version: 0x50, type: 0x16 },
   ],
-  defaultFields:
-    "name,id,total_m3,current_status,consumption_at_set_date_m3,set_date,timestamp",
+  defaultFields: "name,id,total_m3,current_status,consumption_at_set_date_m3,set_date,timestamp",
   libraryFields: ["fabrication_no", "total_m3"],
   fields: [
     {
@@ -141,8 +140,7 @@ export const evo868 = defineDriver({
           y -= 1;
         }
         const d = lastDayOfMonth(y, m);
-        ctx.output[`history_${n}_date`] =
-          `${y.toString().padStart(4, "0")}-${pad2(m)}-${pad2(d)}`;
+        ctx.output[`history_${n}_date`] = `${y.toString().padStart(4, "0")}-${pad2(m)}-${pad2(d)}`;
       }
     }
   },

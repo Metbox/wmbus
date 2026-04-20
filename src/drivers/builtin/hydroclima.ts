@@ -15,8 +15,7 @@ export const hydroclima = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
   mvt: [{ manufacturer: BMP, version: 0x53, type: 0x08 }],
-  defaultFields:
-    "name,id,current_consumption_hca,average_ambient_temperature_c,timestamp",
+  defaultFields: "name,id,current_consumption_hca,average_ambient_temperature_c,timestamp",
   fields: [
     {
       kind: "numeric",

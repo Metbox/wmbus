@@ -6,7 +6,6 @@
 // not yet ported; production traffic will populate the standard library
 // fields and fall back to auto-driver behaviour for anything non-standard.
 
-import { flagToManufacturer } from "../../protocol/manufacturers.js";
 import { defineDriver } from "../registry.js";
 
 export const apator172 = defineDriver({

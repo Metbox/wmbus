@@ -11,8 +11,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { decodeWmbusHexSync } from "../../src/api.js";
-import { decodeTelegram } from "../../src/protocol/pipeline.js";
 import { lookupDriverByName } from "../../src/drivers/registry.js";
+import { decodeTelegram } from "../../src/protocol/pipeline.js";
 import { hexToBytes } from "../../src/util/hex.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -73,8 +73,8 @@ describe("auto driver MVT resolution", () => {
       };
 
       const expectedDriver = lookupDriverByName(fx.driver);
-      expect(expectedDriver).not.toBeNull();
-      const declaresWireMVT = expectedDriver!.mvt.some(
+      if (!expectedDriver) throw new Error(`driver ${fx.driver} not registered`);
+      const declaresWireMVT = expectedDriver.mvt.some(
         (m) =>
           m.manufacturer === wire.manufacturer &&
           m.version === wire.version &&
@@ -83,8 +83,10 @@ describe("auto driver MVT resolution", () => {
       // If the fixture's wire MVT is not declared by its own driver, the
       // SKIP list above should cover it. Failing here means a regression in
       // the driver's mvt: array.
-      expect(declaresWireMVT, `${fx.driver} does not declare wire MVT ` +
-        `m=0x${wire.manufacturer.toString(16)} v=0x${wire.version.toString(16)} t=0x${wire.type.toString(16)}`,
+      expect(
+        declaresWireMVT,
+        `${fx.driver} does not declare wire MVT ` +
+          `m=0x${wire.manufacturer.toString(16)} v=0x${wire.version.toString(16)} t=0x${wire.type.toString(16)}`,
       ).toBe(true);
 
       const out = decodeWmbusHexSync(fx.hex, "auto", fx.key === "NOKEY" ? "" : fx.key, {
@@ -97,8 +99,8 @@ describe("auto driver MVT resolution", () => {
       // MVT — registry returns the first registered, which is acceptable.
       expect(out.meter).not.toBe("auto");
       const resolved = lookupDriverByName(out.meter as string);
-      expect(resolved, `auto picked unknown driver "${out.meter}"`).not.toBeNull();
-      const resolvedDeclaresMVT = resolved!.mvt.some(
+      if (!resolved) throw new Error(`auto picked unknown driver "${out.meter}"`);
+      const resolvedDeclaresMVT = resolved.mvt.some(
         (m) =>
           m.manufacturer === wire.manufacturer &&
           m.version === wire.version &&

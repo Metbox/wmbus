@@ -54,8 +54,7 @@ export const mkradio3a = defineDriver({
     ctx.output.target_date = `${year + 2000}-${pad2(month)}-${pad2(day)}T02:00:00Z`;
 
     // Total = 24-bit LE at bytes 4..6, divided by 10.
-    const total =
-      (((c[6] as number) << 16) | ((c[5] as number) << 8) | (c[4] as number)) / 10;
+    const total = (((c[6] as number) << 16) | ((c[5] as number) << 8) | (c[4] as number)) / 10;
     ctx.output.total_m3 = round3(total);
 
     // 12 months of readings: layout depends on day <= 15 or not.

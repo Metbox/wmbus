@@ -18,8 +18,7 @@ export const hydroclimav2 = defineDriver({
     { manufacturer: BMP, version: 0x53, type: 0x08 },
     { manufacturer: BMP, version: 0x85, type: 0x08 },
   ],
-  defaultFields:
-    "name,id,status,current_hca,average_ambient_temperature_c,timestamp",
+  defaultFields: "name,id,status,current_hca,average_ambient_temperature_c,timestamp",
   fields: [
     {
       kind: "string",

@@ -222,8 +222,7 @@ export function readDateTimeTypeI(data: Uint8Array): string {
   const hour = (data[2] as number) & 0x1f;
   const day = (data[3] as number) & 0x1f;
   const month = (data[4] as number) & 0x0f;
-  const year =
-    ((((data[3] as number) & 0xe0) >>> 5) | (((data[4] as number) & 0xf0) >>> 1)) + 2000;
+  const year = ((((data[3] as number) & 0xe0) >>> 5) | (((data[4] as number) & 0xf0) >>> 1)) + 2000;
 
   if ((data[0] as number) === 0xff && (data[1] as number) === 0xff) {
     return "2127-15-31 31:63:63";

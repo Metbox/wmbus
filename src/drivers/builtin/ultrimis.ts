@@ -12,8 +12,7 @@ export const ultrimis = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [{ manufacturer: APA, version: 0x01, type: 0x16 }],
-  defaultFields:
-    "name,id,total_m3,target_m3,current_status,total_backward_flow_m3,timestamp",
+  defaultFields: "name,id,total_m3,target_m3,current_status,total_backward_flow_m3,timestamp",
   fields: [
     {
       kind: "numeric",
