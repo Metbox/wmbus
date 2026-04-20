@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2017-2026 Fredrik Öhrström (gpl-3.0-or-later)
+ * Copyright (C) 2026 Metbox / @metbox/wmbus contributors (gpl-3.0-or-later)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 // Public API surface — drop-in replacement for the WASM wrapper at
 // api/src/shared/wmbusmeters/index.ts.
 //
@@ -11,6 +28,7 @@ import type { MeterState } from "./data/meter-state.js";
 import { runAutoDriver } from "./drivers/auto.js";
 import { interpret } from "./drivers/interpreter.js";
 import { listDriverNames, lookupDriverByName, registerDriver } from "./drivers/registry.js";
+import { loadRemoteDriver, type RemoteDriverOptions } from "./drivers/remote.js";
 import type { DriverDefinition } from "./drivers/types.js";
 import { crc16En13757 } from "./protocol/crc.js";
 import { decodeTelegram as runPipeline } from "./protocol/pipeline.js";
@@ -53,13 +71,21 @@ export interface DecodeOptions {
    * bytes are cached from a prior long-frame transmission).
    */
   meterState?: MeterState;
+  /**
+   * Options passed through to `loadRemoteDriver` when the caller uses the
+   * `@<name>` driver syntax. Use this to override the base URL or disable
+   * the network fetch (useful for tests and air-gapped deployments).
+   */
+  remoteDriverOptions?: RemoteDriverOptions;
 }
 
 /**
  * Decode a wireless M-Bus hex telegram.
  *
  * @param hexString - Raw hex-encoded wM-Bus telegram (whitespace / separator tolerant).
- * @param driver    - Driver name (e.g. "multical21") or "auto" for MVT dispatch.
+ * @param driver    - Driver name (e.g. "multical21"), `"auto"` for MVT dispatch,
+ *                    or `"@<name>"` to download the driver's `<name>.xmq` from
+ *                    wmbusmeters.org on first use (cached thereafter).
  * @param key       - Optional 32-hex-char AES-128 key for encrypted telegrams.
  * @param options   - Optional name / timestamp override (mostly for tests).
  */
@@ -69,6 +95,15 @@ export async function decodeWmbusHex(
   key: string = "",
   options: DecodeOptions = {},
 ): Promise<WMBusDecodeResult> {
+  // `@<name>` — download and register the upstream XMQ driver on first use.
+  // Subsequent calls hit the registry straight away via lookupDriverByName.
+  if (driver.startsWith("@") && driver.length > 1) {
+    const name = driver.slice(1);
+    if (!lookupDriverByName(name)) {
+      await loadRemoteDriver(name, options.remoteDriverOptions);
+    }
+    driver = name;
+  }
   return decodeWmbusHexSync(hexString, driver, key, options);
 }
 
@@ -282,3 +317,9 @@ function mediaForMeterType(meterType: DriverDefinition["meterType"]): string | u
 
 export type { DriverDefinition };
 export { createMeterState, type MeterState } from "./data/meter-state.js";
+export {
+  DEFAULT_DRIVER_BASE_URL,
+  loadRemoteDriver,
+  parseAndRegisterXmqDriver,
+  type RemoteDriverOptions,
+} from "./drivers/remote.js";
