@@ -14,8 +14,8 @@ export const supercom587 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: SON, version: 0x06, type: 0x3c },
-    { manufacturer: SON, version: 0x07, type: 0x3c },
+    { manufacturer: SON, version: 0x3c, type: 0x06 },
+    { manufacturer: SON, version: 0x3c, type: 0x07 },
   ],
   defaultFields: "name,id,total_m3,timestamp",
   libraryFields: ["software_version", "total_m3"],

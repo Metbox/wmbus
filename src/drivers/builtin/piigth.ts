@@ -11,7 +11,7 @@ export const piigth = defineDriver({
   name: "piigth",
   meterType: "TempHygroMeter",
   linkModes: ["MBUS"],
-  mvt: [{ manufacturer: PII, version: 0x1b, type: 0x01 }],
+  mvt: [{ manufacturer: PII, version: 0x01, type: 0x1b }],
   defaultFields: "name,id,status,temperature_c,relative_humidity_rh,timestamp",
   libraryFields: ["fabrication_no", "software_version"],
   fields: [

@@ -30,7 +30,7 @@ export const zenner0b = defineDriver({
   name: "zenner0b",
   linkModes: ["C1"],
   meterType: "WaterMeter",
-  mvt: [{ manufacturer: ZRI, version: 0x16, type: 0x0b }],
+  mvt: [{ manufacturer: ZRI, version: 0x0b, type: 0x16 }],
   defaultFields: "name,id,status,total_m3,target_m3,timestamp",
   fields: [],
   postprocess(ctx) {

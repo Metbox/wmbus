@@ -61,7 +61,7 @@ export const ei6500 = defineDriver({
   name: "ei6500",
   meterType: "SmokeDetector",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: EIE, version: 0x1a, type: 0x0c }],
+  mvt: [{ manufacturer: EIE, version: 0x0c, type: 0x1a }],
   defaultFields: "name,id,status,last_alarm_date,alarm_counter,timestamp",
   fields: [
     {

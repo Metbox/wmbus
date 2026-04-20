@@ -14,9 +14,9 @@ export const iem3000 = defineDriver({
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("SEC"), version: 0x02, type: 0x13 },
-    { manufacturer: flagToManufacturer("SEC"), version: 0x02, type: 0x15 },
-    { manufacturer: flagToManufacturer("SEC"), version: 0x02, type: 0x18 },
+    { manufacturer: flagToManufacturer("SEC"), version: 0x13, type: 0x02 },
+    { manufacturer: flagToManufacturer("SEC"), version: 0x15, type: 0x02 },
+    { manufacturer: flagToManufacturer("SEC"), version: 0x18, type: 0x02 },
   ],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],

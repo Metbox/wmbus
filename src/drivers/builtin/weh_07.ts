@@ -14,8 +14,8 @@ export const weh_07 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("WEH"), version: 0x07, type: 0xfe },
-    { manufacturer: flagToManufacturer("WEH"), version: 0x07, type: 0x03 },
+    { manufacturer: flagToManufacturer("WEH"), version: 0xfe, type: 0x07 },
+    { manufacturer: flagToManufacturer("WEH"), version: 0x03, type: 0x07 },
   ],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],

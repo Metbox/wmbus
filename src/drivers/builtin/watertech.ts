@@ -11,7 +11,7 @@ export const watertech = defineDriver({
   name: "watertech",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: WTT, version: 0x07, type: 0x59 }],
+  mvt: [{ manufacturer: WTT, version: 0x59, type: 0x07 }],
   defaultFields: "name,id,status,total_m3,timestamp",
   libraryFields: ["software_version", "meter_datetime"],
   fields: [

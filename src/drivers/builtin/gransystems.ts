@@ -13,7 +13,7 @@ export const gransystems = defineDriver({
   name: "gransystems",
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("GSS"), version: 0x02, type: 0x01 }],
+  mvt: [{ manufacturer: flagToManufacturer("GSS"), version: 0x01, type: 0x02 }],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],
   fields: [],

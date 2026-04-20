@@ -11,7 +11,7 @@ export const ebzwmbe = defineDriver({
   name: "ebzwmbe",
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: EBZ, version: 0x02, type: 0x01 }],
+  mvt: [{ manufacturer: EBZ, version: 0x01, type: 0x02 }],
   defaultFields:
     "name,id,total_energy_consumption_kwh,current_power_consumption_kw," +
     "current_power_consumption_phase1_kw,current_power_consumption_phase2_kw," +

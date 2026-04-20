@@ -37,7 +37,7 @@ export const mkradio3a = defineDriver({
   name: "mkradio3a",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: TCH, version: 0x72, type: 0x50 }],
+  mvt: [{ manufacturer: TCH, version: 0x50, type: 0x72 }],
   defaultFields: "name,id,total_m3,target_m3,timestamp",
   fields: [],
   postprocess(ctx) {

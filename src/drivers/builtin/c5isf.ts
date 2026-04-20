@@ -14,9 +14,9 @@ export const c5isf = defineDriver({
   meterType: "HeatMeter",
   linkModes: ["C1", "T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("ZRI"), version: 0x0d, type: 0x88 },
-    { manufacturer: flagToManufacturer("ZRI"), version: 0x07, type: 0x88 },
-    { manufacturer: flagToManufacturer("ZRI"), version: 0x04, type: 0x88 },
+    { manufacturer: flagToManufacturer("ZRI"), version: 0x88, type: 0x0d },
+    { manufacturer: flagToManufacturer("ZRI"), version: 0x88, type: 0x07 },
+    { manufacturer: flagToManufacturer("ZRI"), version: 0x88, type: 0x04 },
   ],
   defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
   libraryFields: [

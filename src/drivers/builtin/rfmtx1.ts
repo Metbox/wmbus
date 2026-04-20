@@ -13,7 +13,7 @@ export const rfmtx1 = defineDriver({
   name: "rfmtx1",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("BMT"), version: 0x07, type: 0x05 }],
+  mvt: [{ manufacturer: flagToManufacturer("BMT"), version: 0x05, type: 0x07 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
   fields: [],

@@ -19,8 +19,8 @@ export const fhkvdataiii = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: TCH, version: 0x80, type: 0x69 },
-    { manufacturer: TCH, version: 0x80, type: 0x94 },
+    { manufacturer: TCH, version: 0x69, type: 0x80 },
+    { manufacturer: TCH, version: 0x94, type: 0x80 },
   ],
   defaultFields:
     "name,id,current_hca,current_date,previous_hca,previous_date,temp_room_c,temp_radiator_c,timestamp",

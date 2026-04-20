@@ -6,7 +6,7 @@ export const sharky774 = defineDriver({
   name: "sharky774",
   meterType: "HeatMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("DME"), version: 0x70, type: 0x04 }],
+  mvt: [{ manufacturer: flagToManufacturer("DME"), version: 0x04, type: 0x70 }],
   defaultFields: "name,id,total_kwh,total_volume_m3,timestamp",
   libraryFields: ["meter_datetime", "fabrication_no"],
   fields: [

@@ -11,7 +11,7 @@ export const lansenrp = defineDriver({
   name: "lansenrp",
   meterType: "Repeater",
   linkModes: ["C1"],
-  mvt: [{ manufacturer: LAS, version: 0x32, type: 0x0b }],
+  mvt: [{ manufacturer: LAS, version: 0x0b, type: 0x32 }],
   defaultFields:
     "name,id,status,total_routed_messages_counter,used_router_slots_counter," +
     "is_repeater_listening,timestamp",

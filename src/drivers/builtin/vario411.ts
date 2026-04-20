@@ -13,7 +13,7 @@ export const vario411 = defineDriver({
   name: "vario411",
   meterType: "HeatMeter",
   linkModes: ["C1", "T1"],
-  mvt: [{ manufacturer: flagToManufacturer("TCH"), version: 0x04, type: 0x28 }],
+  mvt: [{ manufacturer: flagToManufacturer("TCH"), version: 0x28, type: 0x04 }],
   defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
   libraryFields: [
     "total_energy_consumption_kwh",

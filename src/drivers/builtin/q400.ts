@@ -14,8 +14,8 @@ export const q400 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: AXI, version: 0x07, type: 0x01 },
-    { manufacturer: AXI, version: 0x07, type: 0x10 },
+    { manufacturer: AXI, version: 0x01, type: 0x07 },
+    { manufacturer: AXI, version: 0x10, type: 0x07 },
   ],
   defaultFields: "name,id,total_m3,timestamp",
   libraryFields: [

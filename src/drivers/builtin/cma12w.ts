@@ -11,7 +11,7 @@ export const cma12w = defineDriver({
   name: "cma12w",
   meterType: "TempHygroMeter",
   linkModes: ["C1", "T1"],
-  mvt: [{ manufacturer: ELV, version: 0x1b, type: 0x20 }],
+  mvt: [{ manufacturer: ELV, version: 0x20, type: 0x1b }],
   defaultFields: "name,id,current_temperature_c,timestamp",
   libraryFields: ["software_version"],
   fields: [

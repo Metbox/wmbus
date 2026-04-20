@@ -13,7 +13,7 @@ export const sharky = defineDriver({
   name: "sharky",
   meterType: "HeatMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: HYD, version: 0x04, type: 0x20 }],
+  mvt: [{ manufacturer: HYD, version: 0x20, type: 0x04 }],
   defaultFields:
     "name,id,total_energy_consumption_kwh,total_energy_consumption_tariff1_kwh,total_volume_m3," +
     "total_volume_tariff2_m3,volume_flow_m3h,power_kw,flow_temperature_c," +

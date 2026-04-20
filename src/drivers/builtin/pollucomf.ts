@@ -11,7 +11,7 @@ export const pollucomf = defineDriver({
   name: "pollucomf",
   meterType: "HeatMeter",
   linkModes: ["T1", "C1", "MBUS"],
-  mvt: [{ manufacturer: SEN, version: 0x04, type: 0x1d }],
+  mvt: [{ manufacturer: SEN, version: 0x1d, type: 0x04 }],
   defaultFields: "name,id,status,total_kwh,total_m3,target_kwh,target_m3,timestamp",
   fields: [
     {

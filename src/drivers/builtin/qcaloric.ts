@@ -17,13 +17,13 @@ export const qcaloric = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: ["C1", "T1", "S1"],
   mvt: [
-    { manufacturer: LSE, version: 0x08, type: 0x34 },
-    { manufacturer: LSE, version: 0x08, type: 0x35 },
-    { manufacturer: LSE, version: 0x08, type: 0x18 }, // whe4
-    { manufacturer: QDS, version: 0x08, type: 0x34 },
-    { manufacturer: QDS, version: 0x08, type: 0x35 },
-    { manufacturer: QDS, version: 0x08, type: 0x36 },
-    { manufacturer: ZRI, version: 0x08, type: 0xfd },
+    { manufacturer: LSE, version: 0x34, type: 0x08 },
+    { manufacturer: LSE, version: 0x35, type: 0x08 },
+    { manufacturer: LSE, version: 0x18, type: 0x08 }, // whe4
+    { manufacturer: QDS, version: 0x34, type: 0x08 },
+    { manufacturer: QDS, version: 0x35, type: 0x08 },
+    { manufacturer: QDS, version: 0x36, type: 0x08 },
+    { manufacturer: ZRI, version: 0xfd, type: 0x08 },
   ],
   defaultFields: "name,id,current_consumption_hca,set_date,consumption_at_set_date_hca,timestamp",
   fields: [

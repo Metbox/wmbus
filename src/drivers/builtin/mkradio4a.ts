@@ -14,8 +14,8 @@ export const mkradio4a = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("HYD"), version: 0x06, type: 0xfe },
-    { manufacturer: flagToManufacturer("TCH"), version: 0x37, type: 0x95 },
+    { manufacturer: flagToManufacturer("HYD"), version: 0xfe, type: 0x06 },
+    { manufacturer: flagToManufacturer("TCH"), version: 0x95, type: 0x37 },
   ],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],

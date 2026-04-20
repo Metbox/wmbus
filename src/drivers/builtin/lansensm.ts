@@ -11,7 +11,7 @@ export const lansensm = defineDriver({
   name: "lansensm",
   meterType: "SmokeDetector",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: LAS, version: 0x1a, type: 0x03 }],
+  mvt: [{ manufacturer: LAS, version: 0x03, type: 0x1a }],
   defaultFields: "name,id,status,minutes_since_last_manual_test_counter,timestamp",
   fields: [
     {

@@ -12,9 +12,9 @@ export const lansenpu = defineDriver({
   meterType: "PulseCounter",
   linkModes: [],
   mvt: [
-    { manufacturer: LAS, version: 0x00, type: 0x14 },
-    { manufacturer: LAS, version: 0x00, type: 0x1b },
-    { manufacturer: LAS, version: 0x02, type: 0x0b },
+    { manufacturer: LAS, version: 0x14, type: 0x00 },
+    { manufacturer: LAS, version: 0x1b, type: 0x00 },
+    { manufacturer: LAS, version: 0x0b, type: 0x02 },
   ],
   defaultFields: "name,id,status,a_counter,b_counter,timestamp",
   fields: [

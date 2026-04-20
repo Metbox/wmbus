@@ -20,7 +20,7 @@ export const aventieswm = defineDriver({
   name: "aventieswm",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: AAA, version: 0x07, type: 0x25 }],
+  mvt: [{ manufacturer: AAA, version: 0x25, type: 0x07 }],
   defaultFields: "name,id,total_m3,error_flags,timestamp",
   fields: [
     {

@@ -12,11 +12,11 @@ export const lse_07_17 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["S1"],
   mvt: [
-    { manufacturer: LSE, version: 0x06, type: 0x18 },
-    { manufacturer: LSE, version: 0x07, type: 0x18 },
-    { manufacturer: LSE, version: 0x07, type: 0x16 },
-    { manufacturer: LSE, version: 0x07, type: 0x17 },
-    { manufacturer: LSE, version: 0x07, type: 0xd8 },
+    { manufacturer: LSE, version: 0x18, type: 0x06 },
+    { manufacturer: LSE, version: 0x18, type: 0x07 },
+    { manufacturer: LSE, version: 0x16, type: 0x07 },
+    { manufacturer: LSE, version: 0x17, type: 0x07 },
+    { manufacturer: LSE, version: 0xd8, type: 0x07 },
   ],
   defaultFields:
     "name,id,total_m3,due_date_m3,due_date,error_code,error_date,device_date_time,timestamp",
