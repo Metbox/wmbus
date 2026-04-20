@@ -31,9 +31,9 @@ export const minomess = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["C1"],
   mvt: [
-    { manufacturer: ZRI, version: 0x07, type: 0x00 },
-    { manufacturer: ZRI, version: 0x16, type: 0x01 },
-    { manufacturer: ZRI, version: 0x06, type: 0x01 },
+    { manufacturer: ZRI, version: 0x00, type: 0x07 },
+    { manufacturer: ZRI, version: 0x01, type: 0x16 },
+    { manufacturer: ZRI, version: 0x01, type: 0x06 },
   ],
   defaultFields: "name,id,total_m3,target_m3,status,timestamp",
   libraryFields: [

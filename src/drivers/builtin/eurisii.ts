@@ -22,8 +22,8 @@ export const eurisii = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: INE, version: 0x08, type: 0x55 },
-    { manufacturer: RAM, version: 0x08, type: 0x55 },
+    { manufacturer: INE, version: 0x55, type: 0x08 },
+    { manufacturer: RAM, version: 0x55, type: 0x08 },
   ],
   defaultFields: "name,id,current_consumption_hca,status,timestamp",
   fields: [

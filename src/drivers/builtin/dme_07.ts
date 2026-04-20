@@ -11,7 +11,7 @@ export const dme_07 = defineDriver({
   name: "dme_07",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: DME, version: 0x07, type: 0x7b }],
+  mvt: [{ manufacturer: DME, version: 0x7b, type: 0x07 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   fields: [
     {

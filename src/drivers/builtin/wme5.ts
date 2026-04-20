@@ -13,7 +13,7 @@ export const wme5 = defineDriver({
   name: "wme5",
   meterType: "HeatMeter",
   linkModes: ["C1", "T1"],
-  mvt: [{ manufacturer: flagToManufacturer("QDS"), version: 0x07, type: 0x1a }],
+  mvt: [{ manufacturer: flagToManufacturer("QDS"), version: 0x1a, type: 0x07 }],
   defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
   libraryFields: [
     "total_energy_consumption_kwh",

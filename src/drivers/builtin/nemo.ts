@@ -13,7 +13,7 @@ export const nemo = defineDriver({
   name: "nemo",
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("IME"), version: 0x02, type: 0x1d }],
+  mvt: [{ manufacturer: flagToManufacturer("IME"), version: 0x1d, type: 0x02 }],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],
   fields: [],

@@ -12,7 +12,7 @@ export const sharky775 = defineDriver({
   name: "sharky775",
   meterType: "HeatMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("DME"), version: 0x04, type: 0x40 }],
+  mvt: [{ manufacturer: flagToManufacturer("DME"), version: 0x40, type: 0x04 }],
   defaultFields:
     "name,id,total_energy_consumption_kwh,total_volume_m3,volume_flow_m3h,power_kw,flow_temperature_c,return_temperature_c,temperature_difference_c,timestamp",
   libraryFields: ["operating_time_h"],

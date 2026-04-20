@@ -26,8 +26,8 @@ export const apatoreitn = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: [],
   mvt: [
-    { manufacturer: APA, version: 0x08, type: 0x04 },
-    { manufacturer: APT, version: 0x08, type: 0x04 },
+    { manufacturer: APA, version: 0x04, type: 0x08 },
+    { manufacturer: APT, version: 0x04, type: 0x08 },
   ],
   defaultFields:
     "name,id,current_hca,previous_hca,current_date,season_start_date,esb_date," +

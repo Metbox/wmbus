@@ -14,8 +14,8 @@ export const topaseskr = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("AMT"), version: 0x06, type: 0xf1 },
-    { manufacturer: flagToManufacturer("AMT"), version: 0x07, type: 0xf1 },
+    { manufacturer: flagToManufacturer("AMT"), version: 0xf1, type: 0x06 },
+    { manufacturer: flagToManufacturer("AMT"), version: 0xf1, type: 0x07 },
   ],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],

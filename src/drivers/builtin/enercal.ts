@@ -15,7 +15,7 @@ export const enercal = defineDriver({
   name: "enercal",
   meterType: "HeatMeter",
   linkModes: ["MBUS"],
-  mvt: [{ manufacturer: GWF, version: 0x04, type: 0x08 }],
+  mvt: [{ manufacturer: GWF, version: 0x08, type: 0x04 }],
   defaultFields: "name,id,status,total_kwh,target_kwh,total_m3,target_m3,timestamp",
   fields: [
     {

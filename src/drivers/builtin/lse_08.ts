@@ -11,7 +11,7 @@ export const lse_08 = defineDriver({
   name: "lse_08",
   meterType: "HeatCostAllocationMeter",
   linkModes: ["C1", "T1", "S1"],
-  mvt: [{ manufacturer: LSE, version: 0x08, type: 0x01 }],
+  mvt: [{ manufacturer: LSE, version: 0x01, type: 0x08 }],
   defaultFields: "name,id,set_date,consumption_at_set_date_hca,timestamp",
   fields: [
     {

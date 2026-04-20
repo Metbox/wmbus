@@ -14,8 +14,8 @@ export const em24 = defineDriver({
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("KAM"), version: 0x02, type: 0x33 },
-    { manufacturer: flagToManufacturer("GAV"), version: 0x02, type: 0x00 },
+    { manufacturer: flagToManufacturer("KAM"), version: 0x33, type: 0x02 },
+    { manufacturer: flagToManufacturer("GAV"), version: 0x00, type: 0x02 },
   ],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],

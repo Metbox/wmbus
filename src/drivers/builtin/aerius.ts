@@ -14,7 +14,7 @@ export const aerius = defineDriver({
   name: "aerius",
   meterType: "GasMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: DME, version: 0x03, type: 0x30 }],
+  mvt: [{ manufacturer: DME, version: 0x30, type: 0x03 }],
   defaultFields: "name,id,total_m3,timestamp",
   fields: [
     {

@@ -44,13 +44,16 @@ function parseCc(path: string): Meta | null {
   const t = /di\.setMeterType\(MeterType::(\w+)\)/.exec(c);
   const aliases = [...c.matchAll(/di\.addNameAlias\("([^"]+)"\)/g)].map((m) => m[1] as string);
   const mvts: MVT[] = [];
+  // Upstream signature is `addMVT(uint16_t mfct, uchar type, uchar ver)`
+  // (see vendor/.../src/meters.h:192). The 2nd positional arg is TYPE and the
+  // 3rd is VERSION — store accordingly, NOT in source order.
   for (const m of c.matchAll(
     /di\.addMVT\(MANUFACTURER_(\w+),\s*0x([0-9a-fA-F]+),\s*0x([0-9a-fA-F]+)\)/g,
   )) {
     mvts.push({
       mfct: m[1] as string,
-      version: Number.parseInt(m[2] as string, 16),
-      type: Number.parseInt(m[3] as string, 16),
+      type: Number.parseInt(m[2] as string, 16),
+      version: Number.parseInt(m[3] as string, 16),
     });
   }
   // Handle raw-hex manufacturer codes (`di.addMVT(0x8614, ...)`).
@@ -60,8 +63,8 @@ function parseCc(path: string): Meta | null {
     mvts.push({
       mfct: "",
       rawCode: Number.parseInt(m[1] as string, 16),
-      version: Number.parseInt(m[2] as string, 16),
-      type: Number.parseInt(m[3] as string, 16),
+      type: Number.parseInt(m[2] as string, 16),
+      version: Number.parseInt(m[3] as string, 16),
     });
   }
   return { name: n[1] as string, meterType: t?.[1] ?? "Unknown", aliases, mvts };

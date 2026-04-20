@@ -13,7 +13,7 @@ export const unismart = defineDriver({
   name: "unismart",
   meterType: "GasMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("AMX"), version: 0x03, type: 0x01 }],
+  mvt: [{ manufacturer: flagToManufacturer("AMX"), version: 0x01, type: 0x03 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "meter_datetime"],
   fields: [],

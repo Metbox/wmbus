@@ -14,8 +14,8 @@ export const esyswm = defineDriver({
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("ESY"), version: 0x37, type: 0x30 },
-    { manufacturer: flagToManufacturer("ESY"), version: 0x02, type: 0x11 },
+    { manufacturer: flagToManufacturer("ESY"), version: 0x30, type: 0x37 },
+    { manufacturer: flagToManufacturer("ESY"), version: 0x11, type: 0x02 },
   ],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],

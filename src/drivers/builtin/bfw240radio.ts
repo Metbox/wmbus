@@ -13,7 +13,7 @@ export const bfw240radio = defineDriver({
   name: "bfw240radio",
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("BFW"), version: 0x08, type: 0x02 }],
+  mvt: [{ manufacturer: flagToManufacturer("BFW"), version: 0x02, type: 0x08 }],
   defaultFields: "name,id,consumption_hca,status,timestamp",
   libraryFields: [
     "current_consumption_hca",

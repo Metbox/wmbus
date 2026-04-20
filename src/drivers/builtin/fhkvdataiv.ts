@@ -16,8 +16,8 @@ export const fhkvdataiv = defineDriver({
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: TCH, version: 0x08, type: 0x69 },
-    { manufacturer: TCH, version: 0x08, type: 0x94 },
+    { manufacturer: TCH, version: 0x69, type: 0x08 },
+    { manufacturer: TCH, version: 0x94, type: 0x08 },
   ],
   defaultFields:
     "name,id,current_consumption_hca,set_date,consumption_at_set_date_hca,timestamp",

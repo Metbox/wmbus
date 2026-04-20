@@ -12,8 +12,8 @@ export const qsmoke = defineDriver({
   meterType: "SmokeDetector",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: QDS, version: 0x1a, type: 0x21 },
-    { manufacturer: QDS, version: 0x1a, type: 0x23 },
+    { manufacturer: QDS, version: 0x21, type: 0x1a },
+    { manufacturer: QDS, version: 0x23, type: 0x1a },
   ],
   defaultFields: "name,id,status,last_alarm_date,alarm_counter,timestamp",
   fields: [

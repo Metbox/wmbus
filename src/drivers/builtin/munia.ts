@@ -12,8 +12,8 @@ export const munia = defineDriver({
   meterType: "TempHygroMeter",
   linkModes: [],
   mvt: [
-    { manufacturer: WEP, version: 0x1b, type: 0x02 },
-    { manufacturer: WEP, version: 0x1b, type: 0x04 },
+    { manufacturer: WEP, version: 0x02, type: 0x1b },
+    { manufacturer: WEP, version: 0x04, type: 0x1b },
   ],
   defaultFields: "name,id,current_temperature_c,current_relative_humidity_rh,timestamp",
   fields: [

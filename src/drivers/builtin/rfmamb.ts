@@ -11,7 +11,7 @@ export const rfmamb = defineDriver({
   name: "rfmamb",
   meterType: "TempHygroMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: BMT, version: 0x1b, type: 0x10 }],
+  mvt: [{ manufacturer: BMT, version: 0x10, type: 0x1b }],
   defaultFields: "name,id,current_temperature_c,current_relative_humidity_rh,timestamp",
   fields: [
     {

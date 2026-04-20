@@ -12,7 +12,7 @@ export const omnipower = defineDriver({
   name: "omnipower",
   meterType: "ElectricityMeter",
   linkModes: ["C1"],
-  mvt: [{ manufacturer: KAM, version: 0x02, type: 0x30 }],
+  mvt: [{ manufacturer: KAM, version: 0x30, type: 0x02 }],
   defaultFields:
     "name,id,total_energy_consumption_kwh,total_energy_production_kwh," +
     "current_power_consumption_kw,current_power_production_kw,timestamp",

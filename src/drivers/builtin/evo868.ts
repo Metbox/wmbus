@@ -14,9 +14,9 @@ export const evo868 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: MAD, version: 0x06, type: 0x50 },
-    { manufacturer: MAD, version: 0x07, type: 0x50 },
-    { manufacturer: MAD, version: 0x16, type: 0x50 },
+    { manufacturer: MAD, version: 0x50, type: 0x06 },
+    { manufacturer: MAD, version: 0x50, type: 0x07 },
+    { manufacturer: MAD, version: 0x50, type: 0x16 },
   ],
   defaultFields:
     "name,id,total_m3,current_status,consumption_at_set_date_m3,set_date,timestamp",

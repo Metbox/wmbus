@@ -20,7 +20,7 @@ export const aventieshca = defineDriver({
   name: "aventieshca",
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: AAA, version: 0x08, type: 0x55 }],
+  mvt: [{ manufacturer: AAA, version: 0x55, type: 0x08 }],
   defaultFields: "name,id,current_consumption_hca,error_flags,timestamp",
   fields: [
     {

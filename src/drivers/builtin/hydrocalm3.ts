@@ -13,7 +13,7 @@ export const hydrocalm3 = defineDriver({
   name: "hydrocalm3",
   meterType: "HeatCoolingMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: BMT, version: 0x0d, type: 0x0b }],
+  mvt: [{ manufacturer: BMT, version: 0x0b, type: 0x0d }],
   defaultFields:
     "name,id,status,total_heating_kwh,total_cooling_kwh,device_datetime," +
     "total_heating_m3,total_cooling_m3,timestamp",

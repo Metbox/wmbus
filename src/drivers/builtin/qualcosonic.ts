@@ -16,8 +16,8 @@ export const qualcosonic = defineDriver({
   meterType: "HeatCoolingMeter",
   linkModes: ["C1"],
   mvt: [
-    { manufacturer: AXI, version: 0x0d, type: 0x0b },
-    { manufacturer: AXI, version: 0x0d, type: 0x0c },
+    { manufacturer: AXI, version: 0x0b, type: 0x0d },
+    { manufacturer: AXI, version: 0x0c, type: 0x0d },
   ],
   defaultFields:
     "name,id,status,total_heat_energy_kwh,total_cooling_energy_kwh," +

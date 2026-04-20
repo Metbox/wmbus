@@ -14,8 +14,8 @@ export const gwfwater = defineDriver({
   meterType: "WaterMeter",
   linkModes: [],
   mvt: [
-    { manufacturer: GWF, version: 0x0e, type: 0x01 },
-    { manufacturer: GWF, version: 0x07, type: 0x3c },
+    { manufacturer: GWF, version: 0x01, type: 0x0e },
+    { manufacturer: GWF, version: 0x3c, type: 0x07 },
   ],
   defaultFields: "name,id,total_m3,timestamp",
   libraryFields: ["actuality_duration_s", "total_m3", "target_m3", "target_date"],

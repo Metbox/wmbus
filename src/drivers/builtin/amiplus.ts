@@ -15,11 +15,11 @@ export const amiplus = defineDriver({
   linkModes: ["T1"],
   mvt: [
     { manufacturer: APA, version: 0x02, type: 0x02 },
-    { manufacturer: DEV, version: 0x37, type: 0x02 },
-    { manufacturer: DEV, version: 0x02, type: 0x00 },
-    { manufacturer: DEV, version: 0x02, type: 0x01 },
-    { manufacturer: NES, version: 0x02, type: 0x03 },
-    { manufacturer: APA, version: 0x02, type: 0x01 }, // Otus 1/3
+    { manufacturer: DEV, version: 0x02, type: 0x37 },
+    { manufacturer: DEV, version: 0x00, type: 0x02 },
+    { manufacturer: DEV, version: 0x01, type: 0x02 },
+    { manufacturer: NES, version: 0x03, type: 0x02 },
+    { manufacturer: APA, version: 0x01, type: 0x02 }, // Otus 1/3
   ],
   defaultFields:
     "name,id,total_energy_consumption_kwh,current_power_consumption_kw,total_energy_production_kwh," +

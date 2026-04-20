@@ -13,9 +13,9 @@ export const flowiq2200 = defineDriver({
   linkModes: ["C1"],
   mvt: [
     { manufacturer: KAM, version: 0x16, type: 0x16 },
-    { manufacturer: KAM, version: 0x18, type: 0x06 },
-    { manufacturer: KAM, version: 0x18, type: 0x16 },
-    { manufacturer: KAM, version: 0x1f, type: 0x16 },
+    { manufacturer: KAM, version: 0x06, type: 0x18 },
+    { manufacturer: KAM, version: 0x16, type: 0x18 },
+    { manufacturer: KAM, version: 0x16, type: 0x1f },
   ],
   defaultFields:
     "name,id,status,total_m3,target_m3,target_date,flow_m3h," +

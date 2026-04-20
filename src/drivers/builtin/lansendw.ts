@@ -11,7 +11,7 @@ export const lansendw = defineDriver({
   name: "lansendw",
   meterType: "DoorWindowSensor",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: LAS, version: 0x1d, type: 0x07 }],
+  mvt: [{ manufacturer: LAS, version: 0x07, type: 0x1d }],
   defaultFields: "name,id,status,timestamp",
   fields: [
     {

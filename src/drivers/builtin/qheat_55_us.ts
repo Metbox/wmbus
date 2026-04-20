@@ -14,8 +14,8 @@ export const qheat_55_us = defineDriver({
   meterType: "HeatMeter",
   linkModes: ["C1", "T1"],
   mvt: [
-    { manufacturer: flagToManufacturer("LUG"), version: 0x04, type: 0x07 },
-    { manufacturer: flagToManufacturer("LUG"), version: 0x04, type: 0x0a },
+    { manufacturer: flagToManufacturer("LUG"), version: 0x07, type: 0x04 },
+    { manufacturer: flagToManufacturer("LUG"), version: 0x0a, type: 0x04 },
   ],
   defaultFields: "name,id,total_kwh,total_volume_m3,status,timestamp",
   libraryFields: [

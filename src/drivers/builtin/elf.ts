@@ -11,7 +11,7 @@ export const elf = defineDriver({
   name: "elf",
   meterType: "HeatMeter",
   linkModes: [],
-  mvt: [{ manufacturer: APA, version: 0x04, type: 0x40 }],
+  mvt: [{ manufacturer: APA, version: 0x40, type: 0x04 }],
   defaultFields:
     "name,id,total_energy_consumption_kwh,current_power_consumption_kw,total_volume_m3," +
     "flow_temperature_c,return_temperature_c,external_temperature_c,status,timestamp",

@@ -13,7 +13,7 @@ export const apatorna1 = defineDriver({
   name: "apatorna1",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("APA"), version: 0x07, type: 0x14 }],
+  mvt: [{ manufacturer: flagToManufacturer("APA"), version: 0x14, type: 0x07 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
   fields: [],

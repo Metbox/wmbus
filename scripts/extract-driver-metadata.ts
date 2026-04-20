@@ -29,14 +29,16 @@ function parseCcDriver(path: string, filename: string): Meta | null {
   const linkModes = [...content.matchAll(/di\.addLinkMode\(LinkMode::(\w+)\)/g)].map(
     (m) => m[1] ?? "",
   );
+  // Upstream signature is `addMVT(uint16_t mfct, uchar type, uchar ver)` —
+  // see vendor/.../src/meters.h:192. The 2nd positional arg is TYPE.
   const mvts = [
     ...content.matchAll(
       /di\.addMVT\(MANUFACTURER_(\w+),\s*0x([0-9a-fA-F]+),\s*0x([0-9a-fA-F]+)\)/g,
     ),
   ].map((m) => ({
     mfct: m[1] ?? "",
-    version: Number.parseInt(m[2] ?? "0", 16),
-    type: Number.parseInt(m[3] ?? "0", 16),
+    type: Number.parseInt(m[2] ?? "0", 16),
+    version: Number.parseInt(m[3] ?? "0", 16),
   }));
   return {
     name: nameMatch[1] ?? "",

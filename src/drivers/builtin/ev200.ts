@@ -13,7 +13,7 @@ export const ev200 = defineDriver({
   name: "ev200",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("ELR"), version: 0x07, type: 0x0d }],
+  mvt: [{ manufacturer: flagToManufacturer("ELR"), version: 0x0d, type: 0x07 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
   fields: [],

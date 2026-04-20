@@ -13,7 +13,7 @@ export const abbb23 = defineDriver({
   name: "abbb23",
   meterType: "ElectricityMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("ABB"), version: 0x02, type: 0x20 }],
+  mvt: [{ manufacturer: flagToManufacturer("ABB"), version: 0x20, type: 0x02 }],
   defaultFields: "name,id,total_energy_consumption_kwh,status,timestamp",
   libraryFields: ["total_energy_consumption_kwh", "meter_datetime"],
   fields: [],

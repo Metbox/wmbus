@@ -11,7 +11,7 @@ export const sontex868 = defineDriver({
   name: "sontex868",
   meterType: "HeatCostAllocationMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: SON, version: 0x08, type: 0x16 }],
+  mvt: [{ manufacturer: SON, version: 0x16, type: 0x08 }],
   defaultFields: "name,id,current_consumption_hca,set_date,consumption_at_set_date_hca,timestamp",
   fields: [
     {

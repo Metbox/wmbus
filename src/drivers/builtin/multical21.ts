@@ -19,8 +19,8 @@ export const multical21 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["C1"],
   mvt: [
-    { manufacturer: MANUFACTURER.KAM, version: 0x06, type: 0x1b },
-    { manufacturer: MANUFACTURER.KAM, version: 0x16, type: 0x1b },
+    { manufacturer: MANUFACTURER.KAM, version: 0x1b, type: 0x06 },
+    { manufacturer: MANUFACTURER.KAM, version: 0x1b, type: 0x16 },
   ],
   defaultFields:
     "name,id,total_m3,target_m3,max_flow_m3h,flow_temperature_c,external_temperature_c,status,timestamp",

@@ -14,8 +14,8 @@ export const vario451 = defineDriver({
   meterType: "HeatMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: TCH, version: 0x04, type: 0x27 },
-    { manufacturer: TCH, version: 0xc3, type: 0x27 },
+    { manufacturer: TCH, version: 0x27, type: 0x04 },
+    { manufacturer: TCH, version: 0x27, type: 0xc3 },
   ],
   defaultFields: "name,id,total_kwh,current_kwh,previous_kwh,timestamp",
   fields: [],

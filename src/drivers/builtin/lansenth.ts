@@ -13,8 +13,8 @@ export const lansenth = defineDriver({
   meterType: "TempHygroMeter",
   linkModes: [],
   mvt: [
-    { manufacturer: LAS, version: 0x1b, type: 0x07 },
-    { manufacturer: LAS, version: 0x1b, type: 0x09 },
+    { manufacturer: LAS, version: 0x07, type: 0x1b },
+    { manufacturer: LAS, version: 0x09, type: 0x1b },
   ],
   defaultFields: "name,id,current_temperature_c,current_relative_humidity_rh,timestamp",
   libraryFields: ["on_time_h"],

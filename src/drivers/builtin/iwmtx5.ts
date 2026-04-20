@@ -13,8 +13,8 @@ export const iwmtx5 = defineDriver({
   meterType: "WaterMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: BMT, version: 0x07, type: 0x18 },
-    { manufacturer: BMT, version: 0x06, type: 0x18 },
+    { manufacturer: BMT, version: 0x18, type: 0x07 },
+    { manufacturer: BMT, version: 0x18, type: 0x06 },
   ],
   defaultFields: "name,id,status,total_m3,timestamp",
   libraryFields: ["meter_datetime", "total_m3"],

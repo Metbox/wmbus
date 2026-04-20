@@ -13,7 +13,7 @@ export const emerlin868 = defineDriver({
   name: "emerlin868",
   meterType: "WaterMeter",
   linkModes: ["T1"],
-  mvt: [{ manufacturer: flagToManufacturer("ELR"), version: 0x37, type: 0x11 }],
+  mvt: [{ manufacturer: flagToManufacturer("ELR"), version: 0x11, type: 0x37 }],
   defaultFields: "name,id,total_m3,status,timestamp",
   libraryFields: ["total_m3", "target_m3", "target_date", "meter_datetime"],
   fields: [],
