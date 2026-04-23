@@ -34,6 +34,7 @@
 // with-key flow depends on ([process-wmbus.ts:156 `isDecryptionBetter`]).
 
 import { ciType, isAfl, isEll, isTpl } from "./ci.js";
+import { DIEHL_OMS_DEFAULT_AES_KEY, shouldUseDiehlDefaultKey } from "./default-keys.js";
 import { type EllResult, parseEll } from "./ell.js";
 import { parseTelegram, parseTelegramBytes, type Telegram } from "./link-layer.js";
 import { mediaType } from "./media.js";
@@ -200,11 +201,30 @@ function decodeFromTelegram(telegram: Telegram, aesKey: Uint8Array | null): Asse
     });
   }
 
+  // Diehl OMS mode-5 telegrams can be decrypted with a hardcoded PRIOS key
+  // when the caller didn't supply one — this is upstream's
+  // `addDefaultManufacturerKeyIfAny()` hook. Only inject for short-TPL (CI
+  // 0x7A) frames with enough header bytes; parseTpl will error on shorter.
+  let effectiveAesKey = aesKey;
+  if (effectiveAesKey === null && currentCi === 0x7a && afterEllPayload.length >= 4) {
+    const cfgWord = (afterEllPayload[2] as number) | ((afterEllPayload[3] as number) << 8);
+    if (
+      shouldUseDiehlDefaultKey({
+        manufacturer: telegram.dll.dllMfct,
+        cField: telegram.dll.dllC,
+        ci: currentCi,
+        cfgWord,
+      })
+    ) {
+      effectiveAesKey = DIEHL_OMS_DEFAULT_AES_KEY;
+    }
+  }
+
   const tpl = parseTpl(
     currentCi,
     afterEllPayload,
     { mfctBytes: dllMfctBytes, address: dllAddress },
-    aesKey,
+    effectiveAesKey,
   );
 
   let decryptionStatus: DecryptionStatus;

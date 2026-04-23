@@ -28,6 +28,7 @@
 import type { DVEntry } from "../data/dv-parser.js";
 import { type InterpretContext, interpret } from "./interpreter.js";
 import { lookupDriverByMVT } from "./registry.js";
+import { findSimilarDriver } from "./similar.js";
 import type { DriverDefinition, MVT } from "./types.js";
 
 export interface AutoContext extends InterpretContext {
@@ -55,6 +56,11 @@ function minimalOutput(ctx: AutoContext): Record<string, unknown> {
 export function runAutoDriver(dvEntries: DVEntry[], ctx: AutoContext): Record<string, unknown> {
   const resolved = lookupDriverByMVT(ctx.mvt);
   if (resolved) return interpret(resolved, dvEntries, ctx);
+  // No exact MVT match. Score every declarative driver against the DV payload
+  // and pick the one that covers the most bytes — upstream calls this
+  // "Similar driver" in analyze mode.
+  const similar = findSimilarDriver(dvEntries);
+  if (similar) return interpret(similar.driver, dvEntries, ctx);
   return minimalOutput(ctx);
 }
 
