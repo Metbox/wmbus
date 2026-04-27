@@ -58,8 +58,11 @@ export function runAutoDriver(dvEntries: DVEntry[], ctx: AutoContext): Record<st
   if (resolved) return interpret(resolved, dvEntries, ctx);
   // No exact MVT match. Score every declarative driver against the DV payload
   // and pick the one that covers the most bytes — upstream calls this
-  // "Similar driver" in analyze mode.
-  const similar = findSimilarDriver(dvEntries);
+  // "Similar driver" in analyze mode. Pass the telegram's effective type so
+  // we mirror wmbusmeters' media-reasonableness gate (metermanager.cc:351-357),
+  // otherwise loose-matcher drivers from the wrong media (e.g. fhkvdataiv on
+  // a water telegram) can outscore tighter, correct candidates.
+  const similar = findSimilarDriver(dvEntries, ctx.mvt.type);
   if (similar) return interpret(similar.driver, dvEntries, ctx);
   return minimalOutput(ctx);
 }

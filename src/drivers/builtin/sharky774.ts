@@ -39,9 +39,9 @@ export const sharky774 = defineDriver({
   meterType: "HeatMeter",
   linkModes: ["T1"],
   mvt: [
-    { manufacturer: DME, version: 0x04, type: 0x41 },
-    { manufacturer: DME, version: 0x0d, type: 0x41 },
-    { manufacturer: DME, version: 0x0c, type: 0x41 },
+    { manufacturer: DME, version: 0x41, type: 0x04 },
+    { manufacturer: DME, version: 0x41, type: 0x0d },
+    { manufacturer: DME, version: 0x41, type: 0x0c },
   ],
   defaultFields: "name,id,total_energy_consumption_kwh,energy_at_set_date_kwh,set_date,timestamp",
   fields: [

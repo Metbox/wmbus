@@ -76,14 +76,27 @@ export function scoreDriver(
 /**
  * Find the best-fit driver for a DVEntry list when exact MVT lookup has
  * failed. Returns null when no driver covers any bytes.
+ *
+ * `effectiveType` is the telegram's device-type byte (TPL > ELL > DLL).
+ * When provided, candidate drivers are pre-filtered to those whose declared
+ * MVTs include that exact type — mirroring upstream's
+ * `isMeterDriverReasonableForMedia` gate (metermanager.cc:351-357,
+ * meters.cc:147 `DriverInfo::isValidMedia`). Without this filter, a heat-cost-
+ * allocator driver with very loose matchers (only `MeasurementType::Instantaneous`)
+ * can outscore a tightly-matched water driver on a water telegram. Pass `null`
+ * to skip the filter (test/debug paths only).
  */
-export function findSimilarDriver(dvEntries: DVEntry[]): SimilarDriverMatch | null {
+export function findSimilarDriver(
+  dvEntries: DVEntry[],
+  effectiveType: number | null = null,
+): SimilarDriverMatch | null {
   if (dvEntries.length === 0) return null;
 
   let best: SimilarDriverMatch | null = null;
 
   const candidates = listDrivers()
     .filter((d) => d.preprocess === undefined)
+    .filter((d) => effectiveType === null || d.mvt.some((m) => m.type === effectiveType))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   for (const driver of candidates) {
