@@ -1,6 +1,6 @@
 {
   "name": "@metbox/wmbus",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "TypeScript implementation of the wireless M-Bus (wM-Bus) protocol and meter drivers. Derived from wmbusmeters (GPL-3.0).",
   "license": "GPL-3.0-or-later",
   "type": "module",
