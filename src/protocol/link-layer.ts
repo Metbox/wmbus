@@ -100,17 +100,16 @@ export function parseTelegramBytes(frame: Uint8Array): Telegram {
     );
   }
 
-  const dllLen = frame[0] as number;
+  let dllLen = frame[0] as number;
   // The L-field counts everything after the L-byte itself. Upstream is
-  // forgiving when the frame is longer than L+1 bytes (trimmer trailing
-  // garbage); match that by warning only, not throwing.
-  const expected = dllLen + 1;
-  if (frame.length < expected) {
-    throw new DecodeError(
-      "link-layer",
-      `frame truncated — L says ${expected} bytes but got ${frame.length}`,
-      { frame, offset: 0 },
-    );
+  // forgiving in both directions: when the frame is longer than L+1 bytes it
+  // accepts trailing trimmer garbage, and when the frame is shorter than L+1
+  // (analyze / simulate / CLI hex paths in wmbus.cc:4934-4946 — `only_test`)
+  // it adjusts L to fit the data and warns. Mirror the latter so pasted hex
+  // with a corrupt L-field still decodes — production receivers feed us
+  // already-validated frames so this branch is benign there.
+  if (frame.length < dllLen + 1) {
+    dllLen = frame.length - 1;
   }
 
   const dllC = frame[1] as number;
@@ -124,7 +123,6 @@ export function parseTelegramBytes(frame: Uint8Array): Telegram {
   // HCA's DateTime field, a few qheat variants). When the wire really has L+1
   // bytes, slice() to the end is identical anyway.
   const payload = frame.slice(11);
-  void expected;
 
   return {
     frame,

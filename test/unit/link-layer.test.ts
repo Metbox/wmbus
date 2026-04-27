@@ -67,9 +67,14 @@ describe("parseTelegram — synthetic hand-decoded cases", () => {
     expect(() => parseTelegram("2A442D2C998734761B16")).toThrow();
   });
 
-  it("rejects frames truncated relative to their L-field", () => {
-    // L says 0x2A = 42 more bytes, give it only a handful.
-    expect(() => parseTelegram("2A442D2C998734761B168D")).toThrow();
+  it("clamps L-field down when the frame is shorter than L+1 (analyze-mode lenience)", () => {
+    // L says 0x2A = 43 total bytes, give it only 11 (the DLL minimum).
+    // Mirrors wmbusmeters' `only_test` branch in checkWMBusFrame
+    // (wmbus.cc:4934-4946) so pasted hex with a corrupt L-field still parses.
+    const tg = parseTelegram("2A442D2C998734761B168D");
+    expect(tg.dll.dllLen).toBe(10); // clamped from 0x2A → frame.length - 1
+    expect(tg.dll.dllC).toBe(0x44);
+    expect(tg.ci).toBe(0x8d);
   });
 
   it("summary is a debug-friendly one-liner", () => {
